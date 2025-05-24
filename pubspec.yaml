@@ -68,6 +68,7 @@ flutter:
   assets:
     - assets/icon/
     - assets/food_list.json
+    - assets/profile_sample/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
