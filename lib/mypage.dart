@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:capstone_trial_01/appbar.dart'; 
 
 class MyTab extends StatelessWidget {
   const MyTab({super.key});
@@ -7,33 +8,10 @@ class MyTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: SvgPicture.asset(
-          'assets/icon/left_arrow.svg', // ← 너가 저장한 아이콘 경로로 수정
-            width: 32,
-            height: 32,
-            ),
-      onPressed: () {
-        Navigator.pop(context); // 이전 화면으로 돌아가기
-    },
-  ),
-        title: const Text(
-          '마이페이지',
-          style: TextStyle(
-            fontSize : 24,
-            fontWeight: FontWeight.bold, 
-            color: Colors.black,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
+      appBar: const CustomAppBar(title: '마이페이지'),
       backgroundColor: Colors.white,
       body: ListView(
-        children: [
+        children: const [
           MyProfile(),
           MyShortcutRow(),
           Settings(),
