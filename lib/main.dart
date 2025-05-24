@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:capstone_trial_01/mypage.dart';
 
 import 'sleep_log.dart'; // 파일 경로에 맞게
 
@@ -2063,11 +2064,6 @@ class CalendarTab extends StatelessWidget {
 class PeopleTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(child: Text('커뮤니티/사람들'));
-}
-
-class MyTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Center(child: Text('마이페이지'));
 }
 
 // UI 관련
