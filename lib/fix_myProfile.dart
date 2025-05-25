@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:capstone_trial_01/appbar.dart';
+import 'package:capstone_trial_01/change_password.dart';
 
 class FixMyProfile extends StatelessWidget {
   const FixMyProfile({super.key});
@@ -114,7 +115,12 @@ class FixProfileOptions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> options = [
-      {'text': '비밀번호 변경', 'onTap': () => print('비밀번호 변경')},
+      {'text': '비밀번호 변경', 'onTap': () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ChangePasswordPage()),
+        );
+      }},
       {'text': '건강 정보 수정하기', 'onTap': () => print('건강 정보 수정')},
       {'text': '탈퇴하기', 'onTap': () => print('탈퇴하기')},
     ];
@@ -127,7 +133,7 @@ class FixProfileOptions extends StatelessWidget {
               title: Text(
                 option['text'],
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: Colors.black, 
                 ),
               ),
