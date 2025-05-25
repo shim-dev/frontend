@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:capstone_trial_01/appbar.dart'; 
+import 'package:capstone_trial_01/fix_myProfile.dart'; 
 
 class MyTab extends StatelessWidget {
   const MyTab({super.key});
@@ -21,7 +22,6 @@ class MyTab extends StatelessWidget {
   }
 }
 
-//프로필 사진, 계정 정보
 class MyProfile extends StatelessWidget {
   const MyProfile({super.key});
 
@@ -33,48 +33,42 @@ class MyProfile extends StatelessWidget {
     return Column(
       children: [
         SizedBox(height: screenHeight * 0.03),
-      // 프로필 사진
-       CircleAvatar(
+        // 프로필 사진
+        CircleAvatar(
           radius: screenWidth * 0.15,
-          backgroundImage: AssetImage('assets/profile_sample/mococo.png'), //샘플 프로필 사진
+          backgroundImage: AssetImage('assets/profile_sample/mococo.png'),
           backgroundColor: Colors.deepPurple,
         ),
 
         SizedBox(height: screenHeight * 0.022),
-      //닉네임
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '혜진',
-              style: TextStyle(
-                fontSize: screenWidth * 0.075,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+        // 닉네임 + 오른쪽 화살표 (터치 가능)
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => FixMyProfile()),
+            );
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '혜진',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.075,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-            ),
-            SizedBox(width: screenWidth * 0.03),
-            SvgPicture.asset(
-            'assets/icon/right_arrow.svg',
-              width: 11,
-              height: 18,
-            ),
-          ],
-        ),
-
-        SizedBox(height: screenHeight * 0.0003), 
-        //이메일
-        Text(
-          'abcd1234@naver.com', //샘플이메일
-          style: TextStyle(
-            color: Color(0xFF9E9E9E),
-            fontSize: screenWidth * 0.035,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1, 
+              SizedBox(width: screenWidth * 0.03),
+              SvgPicture.asset(
+                'assets/icon/right_arrow.svg',
+                width: 11,
+                height: 18,
+              ),
+            ],
           ),
         ),
-
-        SizedBox(height: screenHeight * 0.006),
       ],
     );
   }
