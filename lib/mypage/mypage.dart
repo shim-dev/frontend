@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'bookmark.dart';
+import 'event.dart';
 import 'fix_myProfile.dart'; 
 
 class MyTab extends StatelessWidget {
@@ -145,6 +146,12 @@ class MyShortcutRow extends StatelessWidget {
           _ShortcutItem(
             iconPath: 'assets/icon/event.svg',
             label: '이벤트',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const  EventPage()),
+              );
+            },
           ),
           _ShortcutItem(
             iconPath: 'assets/icon/notice.svg',
