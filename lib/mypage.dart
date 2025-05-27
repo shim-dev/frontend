@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:capstone_trial_01/appbar.dart'; 
 import 'package:capstone_trial_01/fix_myProfile.dart'; 
+import 'package:capstone_trial_01/bottom_navigator.dart';
 
 class MyTab extends StatelessWidget {
   const MyTab({super.key});
@@ -17,6 +18,14 @@ class MyTab extends StatelessWidget {
           MyShortcutRow(),
           Settings(),
         ],
+      ),
+        bottomNavigationBar: CustomBottomNavigationBar(
+        selectedIndex: 3, // 마이페이지가 네 번째 탭이니까
+        onTap: (index) {
+          if (index != 3) {
+            Navigator.pop(context); // 또는 원하는 탭으로 이동
+          }
+        },
       ),
     );
   }
