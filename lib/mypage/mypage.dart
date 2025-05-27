@@ -4,6 +4,7 @@ import 'bookmark.dart';
 import 'event.dart';
 import 'fix_myProfile.dart'; 
 import 'notice.dart';
+import 'faq.dart';
 
 class MyTab extends StatelessWidget {
   const MyTab({super.key});
@@ -241,7 +242,11 @@ class _SettingsState extends State<Settings> {
         ),
         SettingItem(
           iconPath: 'assets/icon/information.svg',
-          label: '고객센터',
+          label: '자주 묻는 질문',
+          onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqPage()));
+          },
+
         ),
         SettingItem(
           iconPath: 'assets/icon/paper.svg',
@@ -262,6 +267,7 @@ class SettingItem extends StatelessWidget {
   final bool hasSwitch;
   final bool switchValue;
   final ValueChanged<bool>? onChanged;
+  final VoidCallback? onTap;
 
   const SettingItem({
     super.key,
@@ -270,55 +276,59 @@ class SettingItem extends StatelessWidget {
     this.hasSwitch = false,
     this.switchValue = false,
     this.onChanged,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: screenHeight * 0.025),
-            child: Row(
-              children: [
-                SvgPicture.asset(
-                  iconPath,
-                  width: 24,
-                  height: 24,
-                  colorFilter: const ColorFilter.mode(
-                    Color(0xFF69B294),
-                    BlendMode.srcIn,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: screenHeight * 0.025),
+              child: Row(
+                children: [
+                  SvgPicture.asset(
+                    iconPath,
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      Color(0xFF69B294),
+                      BlendMode.srcIn,
                     ),
                   ),
-                ),
-                if (hasSwitch)
-                  Switch(
-                    value: switchValue,
-                    inactiveTrackColor: const Color(0xFFE0E0E0), 
-                    activeColor: const Color(0xFF69B294),
-                    onChanged: onChanged,
-                  )
-              ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  if (hasSwitch)
+                    Switch(
+                      value: switchValue,
+                      inactiveTrackColor: const Color(0xFFE0E0E0),
+                      activeColor: const Color(0xFF69B294),
+                      onChanged: onChanged,
+                    ),
+                ],
+              ),
             ),
-          ),
-          const Divider(
-            color: Color(0xFFE0E0E0),
-            thickness: 1.0,
-            height: 0,
-          ),
-        ],
+            const Divider(
+              color: Color(0xFFE0E0E0),
+              thickness: 1.0,
+              height: 0,
+            ),
+          ],
+        ),
       ),
     );
   }
