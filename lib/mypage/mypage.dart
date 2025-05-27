@@ -6,6 +6,7 @@ import 'fix_myProfile.dart';
 import 'notice.dart';
 import 'faq.dart';
 import 'inquiry.dart';
+import 'logout.dart';
 
 class MyTab extends StatelessWidget {
   const MyTab({super.key});
@@ -263,6 +264,9 @@ class _SettingsState extends State<Settings> {
         SettingItem(
           iconPath: 'assets/icon/logout.svg',
           label: '로그아웃',
+          onTap: () {
+          showLogoutDialog(context);
+        },
         ),
       ],
     );
