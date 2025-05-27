@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'bookmark.dart';
 import 'fix_myProfile.dart'; 
 
 class MyTab extends StatelessWidget {
@@ -134,6 +135,12 @@ class MyShortcutRow extends StatelessWidget {
           _ShortcutItem(
             iconPath: 'assets/icon/bookmark.svg',
             label: '북마크',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BookmarkPage()),
+              );
+            },
           ),
           _ShortcutItem(
             iconPath: 'assets/icon/event.svg',
@@ -152,10 +159,12 @@ class MyShortcutRow extends StatelessWidget {
 class _ShortcutItem extends StatelessWidget {
   final String iconPath;
   final String label;
+  final VoidCallback? onTap;
 
   const _ShortcutItem({
     required this.iconPath,
     required this.label,
+    this.onTap, 
   });
 
   @override
@@ -163,27 +172,30 @@ class _ShortcutItem extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final iconSize = screenWidth * 0.06;
 
-    return Column(
-      children: [
-        SvgPicture.asset(
-          iconPath,
-          width: iconSize,
-          height: iconSize,
-          colorFilter: ColorFilter.mode(
-            const Color(0xFF69B294),
-            BlendMode.srcIn,
+    return GestureDetector(
+      onTap: onTap, // ✅ 여기 연결
+      child: Column(
+        children: [
+          SvgPicture.asset(
+            iconPath,
+            width: iconSize,
+            height: iconSize,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF69B294),
+              BlendMode.srcIn,
+            ),
           ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.black,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

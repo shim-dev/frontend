@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:capstone_trial_01/appbar.dart';
 
 class WithdrawalScreen extends StatefulWidget {
