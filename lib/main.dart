@@ -39,6 +39,9 @@ class AppRoot extends StatelessWidget {
 }
 
 class ExampleScreen extends StatefulWidget {
+    final int initialIndex;
+
+    const ExampleScreen({super.key, this.initialIndex = 0});
   @override
   _ExampleScreenState createState() => _ExampleScreenState();
 }
@@ -194,16 +197,11 @@ class _ExampleScreenState extends State<ExampleScreen> {
     snackScore.value = snScore;
   }
 
-  void _onItemTapped(int idx) {
-    if (idx == 3) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MyTab()),
-      );
-    } else {
-      setState(() => _selectedIndex = idx);
+    void _onItemTapped(int idx) {
+      setState(() {
+        _selectedIndex = idx;
+      });
     }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -225,6 +223,7 @@ class _ExampleScreenState extends State<ExampleScreen> {
         allRecords: _allRecords,
       ),
       PeopleTab(),
+      MyTab(),
     ];
 
     return Scaffold(
