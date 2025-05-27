@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:capstone_trial_01/appbar.dart';
-import 'package:capstone_trial_01/change_password.dart';
+import 'change_password.dart';
 
 class FixMyProfile extends StatelessWidget {
   const FixMyProfile({super.key});

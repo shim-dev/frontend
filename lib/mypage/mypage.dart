@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:capstone_trial_01/fix_myProfile.dart'; 
+import 'fix_myProfile.dart'; 
 
 class MyTab extends StatelessWidget {
   const MyTab({super.key});

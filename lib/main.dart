@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:capstone_trial_01/mypage.dart';
+import 'package:capstone_trial_01/mypage/mypage.dart';
 
 import 'sleep_log.dart'; // 파일 경로에 맞게
 
