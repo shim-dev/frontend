@@ -7,6 +7,7 @@ import 'notice.dart';
 import 'faq.dart';
 import 'inquiry.dart';
 import 'logout.dart';
+import 'terms.dart';
 
 class MyTab extends StatelessWidget {
   const MyTab({super.key});
@@ -253,6 +254,9 @@ class _SettingsState extends State<Settings> {
         SettingItem(
           iconPath: 'assets/icon/paper.svg',
           label: '약관 확인',
+          onTap: (){
+            Navigator.push(context, MaterialPageRoute(builder: (_)=> const TermsPage()));
+          },
         ),
         SettingItem(
           iconPath: 'assets/icon/chat.svg',
