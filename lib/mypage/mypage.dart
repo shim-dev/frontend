@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'bookmark.dart';
 import 'event.dart';
 import 'fix_myProfile.dart'; 
+import 'notice.dart';
 
 class MyTab extends StatelessWidget {
   const MyTab({super.key});
@@ -156,6 +157,12 @@ class MyShortcutRow extends StatelessWidget {
           _ShortcutItem(
             iconPath: 'assets/icon/notice.svg',
             label: '공지사항',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const  NoticePage()),
+              );
+            }
           ),
         ],
       ),
