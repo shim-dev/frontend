@@ -187,7 +187,7 @@ class _ShortcutItem extends StatelessWidget {
     final iconSize = screenWidth * 0.06;
 
     return GestureDetector(
-      onTap: onTap, // ✅ 여기 연결
+      onTap: onTap, 
       child: Column(
         children: [
           SvgPicture.asset(
@@ -214,17 +214,30 @@ class _ShortcutItem extends StatelessWidget {
   }
 }
 
-class Settings extends StatelessWidget {
+class Settings extends StatefulWidget {
   const Settings({super.key});
+
+  @override
+  State<Settings> createState() => _SettingsState();
+  }
+
+class _SettingsState extends State<Settings> {
+  bool _isNotificationOn = false; // 
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: const [
+      children: [
         SettingItem(
           iconPath: 'assets/icon/bell.svg',
           label: '알림',
           hasSwitch: true,
+          switchValue: _isNotificationOn,
+          onChanged: (value) {
+            setState(() {
+              _isNotificationOn = value;
+            });
+          },
         ),
         SettingItem(
           iconPath: 'assets/icon/information.svg',
@@ -293,6 +306,7 @@ class SettingItem extends StatelessWidget {
                 if (hasSwitch)
                   Switch(
                     value: switchValue,
+                    inactiveTrackColor: const Color(0xFFE0E0E0), 
                     activeColor: const Color(0xFF69B294),
                     onChanged: onChanged,
                   )
