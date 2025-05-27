@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:capstone_trial_01/appbar.dart';
 import 'change_password.dart';
+import 'withdrawal_screen.dart';
 
 class FixMyProfile extends StatelessWidget {
   const FixMyProfile({super.key});
@@ -122,7 +123,15 @@ class FixProfileOptions extends StatelessWidget {
         );
       }},
       {'text': '건강 정보 수정하기', 'onTap': () => print('건강 정보 수정')},
-      {'text': '탈퇴하기', 'onTap': () => print('탈퇴하기')},
+            {
+        'text': '탈퇴하기',
+        'onTap': () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const WithdrawalScreen()),
+          );
+        }
+      },
     ];
 
     return Column(
