@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'birth_screen.dart';
+import '../DB/signup/DB_nickname.dart';
+
 
 // <- 커스텀 화살표 아이콘
 class LeftArrowIcon extends StatelessWidget {
@@ -17,7 +19,8 @@ class LeftArrowIcon extends StatelessWidget {
 }
 
 class NicknameScreen extends StatefulWidget {
-  const NicknameScreen({super.key});
+  final String userId;
+  const NicknameScreen({super.key, required this.userId});
 
   @override
   State<NicknameScreen> createState() => _NicknameScreenState();
@@ -33,29 +36,10 @@ class _NicknameScreenState extends State<NicknameScreen> {
   @override
   void initState() {
     super.initState();
-    _nicknameController.addListener(_validateNickname);
     _focusNode.addListener(_update);
   }
 
   void _update() => setState(() {});
-
-  void _validateNickname() {
-    final text = _nicknameController.text.trim();
-    if (text.isEmpty) {
-      _nicknameError = null;
-      _isAvailable = false;
-    } else if (!RegExp(r'^[가-힣a-zA-Z0-9]{2,12}$').hasMatch(text)) {
-      _nicknameError = '2~12자리 한글/영문/숫자만 입력 가능해요.';
-      _isAvailable = false;
-    } else {
-      _nicknameError = null;
-      _isAvailable = true;
-    }
-    setState(() {});
-  }
-
-  bool get isValidNickname =>
-      _nicknameController.text.trim().isNotEmpty && _nicknameError == null && _isAvailable;
 
   @override
   void dispose() {
@@ -222,8 +206,7 @@ class _NicknameScreenState extends State<NicknameScreen> {
             SizedBox(
               width: double.infinity,
               height: deviceHeight * 0.06,
-              child: isValidNickname
-                  ? DecoratedBox(
+              child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF8F80F9), Color(0xFF5ED593)],
@@ -231,13 +214,28 @@ class _NicknameScreenState extends State<NicknameScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const BirthScreen(),
-                      ),
-                    );
+                  onPressed: () async {
+                    final nickname = _nicknameController.text.trim();
+
+                    if (!RegExp(r'^[가-힣a-zA-Z0-9]{2,12}$').hasMatch(nickname)) {
+                      setState(() {
+                        _nicknameError = '2~12자리 한글/영문/숫자만 입력 가능해요.';
+                      });
+                      return;
+                    }
+
+                    final result = await setNickname(widget.userId, nickname);
+                    if (result['success']) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => BirthScreen(userId: widget.userId))
+
+                      );
+                    } else {
+                      setState(() {
+                        _nicknameError = result['message'];
+                      });
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
@@ -251,20 +249,6 @@ class _NicknameScreenState extends State<NicknameScreen> {
                     '다음',
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
-                ),
-              )
-                  : ElevatedButton(
-                onPressed: null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[400],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  '다음',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
             ),
