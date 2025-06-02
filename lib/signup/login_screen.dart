@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
+import '../DB/signup/DB_login.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final FocusNode _idFocus = FocusNode();
   final FocusNode _pwFocus = FocusNode();
   final FocusNode _customDomainFocus = FocusNode();
+  String? _loginError;
 
   String? selectedDomain = 'naver.com';
   final List<String> domainOptions = [
@@ -147,12 +150,27 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           final domain = selectedDomain == '직접 입력'
                               ? customDomainController.text
                               : selectedDomain;
                           final email = "${idController.text}@$domain";
-                          print('이메일: $email / PW: ${pwController.text}');
+                          final password = pwController.text;
+
+                          final result = await loginUser(email, password); // 실제 로그인 요청
+
+                          if (result['success']) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ExampleScreen(/*userId: result['userId']*/), // 메인 페이지 이동
+                              ),
+                            );
+                          } else {
+                            setState(() {
+                              _loginError = result['message']; // 아래 UI에 에러 메시지 표시
+                            });
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
@@ -167,6 +185,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
+                  if (_loginError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text(
+                        _loginError!,
+                        style: TextStyle(color: Colors.red, fontSize: 13),
+                      ),
+                    ),
+
                   SizedBox(height: deviceHeight * 0.03),
                   const Text('SHIM Lab.',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
