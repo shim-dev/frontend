@@ -1,9 +1,41 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'notice_detail.dart';
 import 'package:capstone_trial_01/appbar.dart';
 
-class NoticePage extends StatelessWidget {
+class NoticePage extends StatefulWidget {
   const NoticePage({super.key});
+
+  @override
+  State<NoticePage> createState() => _NoticePageState();
+}
+
+class _NoticePageState extends State<NoticePage> {
+  List<dynamic> notices = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchNotices();
+  }
+
+  Future<void> fetchNotices() async {
+    final url = Uri.parse('http://127.0.0.1:5000/api/mypage/notice');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        setState(() {
+          notices = json.decode(response.body);
+        });
+      } else {
+        print('❌ 공지사항 불러오기 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ 네트워크 오류: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,33 +44,31 @@ class NoticePage extends StatelessWidget {
     return Scaffold(
       appBar: const CustomAppBar(title: '공지 사항'),
       backgroundColor: Colors.white,
-      body: ListView(
-        children: [
-          _buildNoticeItem(
-            context: context,
-            screenWidth: screenWidth,
-            title: '한번 더 편리해진 2.0 업데이트 안내',
-            date: '2025-05-01',
-            content: '2.0 업데이트로 더욱 편리한 기능이 추가되었습니다!',
-          ),
-          _buildNoticeItem(
-            context: context,
-            screenWidth: screenWidth,
-            title: '레시피 업데이트 안내',
-            date: '2025-05-01',
-            content: '레시피가 새롭게 보강되어 더 다양한 식단을 제공합니다.',
-          ),
-        ],
-      ),
+      body: notices.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: notices.length,
+              itemBuilder: (context, index) {
+                final notice = notices[index];
+                return _buildNoticeItem(
+                  context: context,
+                  screenWidth: screenWidth,
+                  title: notice['title'],
+                  date: notice['date'],
+                  noticeId: notice['id'],
+                );
+              },
+            ),
     );
   }
 
   Widget _buildNoticeItem({
-  required BuildContext context,
-  required double screenWidth,
-  required String title,
-  required String date,
-  required String content,}) {
+    required BuildContext context,
+    required double screenWidth,
+    required String title,
+    required String date,
+    required String noticeId,
+  }) {
     return Column(
       children: [
         InkWell(
@@ -46,7 +76,7 @@ class NoticePage extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => NoticeDetailPage(title: title, content: content, date: date),
+                builder: (_) => NoticeDetailPage(noticeId: noticeId),
               ),
             );
           },
@@ -58,7 +88,6 @@ class NoticePage extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 텍스트들
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +98,7 @@ class NoticePage extends StatelessWidget {
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
                           )),
-                      const SizedBox(height: 6), // 제목과 날짜 사이 간격
+                      const SizedBox(height: 6),
                       Text(
                         date,
                         style: const TextStyle(
