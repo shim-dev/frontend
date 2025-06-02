@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'height_weight_screen.dart';
+import '../DB/signup/DB_gender.dart';
 
 class GenderScreen extends StatefulWidget {
-  const GenderScreen({super.key});
+  final String userId;
+  const GenderScreen({super.key, required this.userId});
 
   @override
   State<GenderScreen> createState() => _GenderScreenState();
@@ -110,16 +112,25 @@ class _GenderScreenState extends State<GenderScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    print('선택된 성별: $selectedGender');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HeightWeightScreen(),
-                      ),
-                    );
+                  onPressed: () async {
+                    // 1. 서버에 userId와 selectedGender 저장
+                    final result = await setGender(widget.userId, selectedGender!);
+                    if (result['success']) {
+                      // 2. 다음 화면(HeightWeightScreen)에도 userId 계속 넘기기
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HeightWeightScreen(userId: widget.userId),
+                        ),
+                      );
+                    } else {
+                      // 3. 실패 시 에러 메시지 표시 (아래 입력란 아래에)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result['message'])),
+                      );
+                    }
                   },
-                  style: ElevatedButton.styleFrom(
+                style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
@@ -191,7 +202,7 @@ class _GenderScreenState extends State<GenderScreen> {
           border: isSelected
               ? Border.all(
             width: 3,
-            // 그라데이션 border를 직접 지원 안 하므로, 아래처럼 gradient + ShaderMask 사용:
+
             color: Colors.transparent,
           )
               : Border.all(color: Colors.transparent),
