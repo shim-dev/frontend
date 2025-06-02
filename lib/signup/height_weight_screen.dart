@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'activity_screen.dart';
+import '../DB/signup/DB_height.dart';
 
 class HeightWeightScreen extends StatefulWidget {
-  const HeightWeightScreen({super.key});
+  final String userId;
+  const HeightWeightScreen({super.key, required this.userId});
 
   @override
   State<HeightWeightScreen> createState() => _HeightWeightScreenState();
@@ -13,8 +15,8 @@ class _HeightWeightScreenState extends State<HeightWeightScreen> {
   int selectedHeight = 160;
   int selectedWeight = 50;
 
-  final List<int> heights = List.generate(121, (index) => 140 + index); // 140~260
-  final List<int> weights = List.generate(121, (index) => 30 + index); // 30~150
+  final List<int> heights = List.generate(121, (index) => 140 + index);
+  final List<int> weights = List.generate(121, (index) => 30 + index);
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ class _HeightWeightScreenState extends State<HeightWeightScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black), // ← 변경
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -174,15 +176,22 @@ class _HeightWeightScreenState extends State<HeightWeightScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    print('선택된 키: $selectedHeight');
-                    print('선택된 몸무게: $selectedWeight');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ActivityLevelScreen(),
-                      ),
-                    );
+                  onPressed: () async {
+                    // 서버에 저장
+                    final result = await setHeightWeight(widget.userId, selectedHeight, selectedWeight);
+                    if (result['success']) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ActivityLevelScreen(userId: widget.userId), // userId 계속 넘김!
+                        ),
+                      );
+                    } else {
+                      // 에러 메시지 보여주기
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result['message'])),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
