@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'alcohol_screen.dart';
+import '../DB/signup/DB_caffeine.dart';
 
 class CaffeineIntakeScreen extends StatefulWidget {
-  const CaffeineIntakeScreen({super.key});
+  final String userId;
+  const CaffeineIntakeScreen({super.key, required this.userId});
 
   @override
   State<CaffeineIntakeScreen> createState() => _CaffeineIntakeScreenState();
@@ -153,15 +155,22 @@ class _CaffeineIntakeScreenState extends State<CaffeineIntakeScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    print('선택된 컵 수: $selectedCups');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AlcoholIntakeScreen(),
-                      ),
-                    );
+                  onPressed: () async {
+                    final result = await setCaffeineCups(widget.userId, selectedCups);
+                    if (result['success']) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AlcoholIntakeScreen(userId: widget.userId),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result['message'] ?? "오류가 발생했습니다.")),
+                      );
+                    }
                   },
+
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
