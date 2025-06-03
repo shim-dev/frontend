@@ -21,7 +21,7 @@ class _InquiryPageState extends State<InquiryPage> {
   }
 
   Future<void> fetchInquiries() async {
-    final url = Uri.parse('http://127.0.0.1:5000/api/mypage/inquiries?user_id=68391556c9c9e1968806a36b');
+    final url = Uri.parse('http://127.0.0.1:5000/api/mypage/inquiries?user_id=683dc52eb059f8754e24303e');
 
     try {
       final response = await http.get(url);

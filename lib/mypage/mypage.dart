@@ -90,7 +90,7 @@ class MyProfile extends StatefulWidget {
 class _MyProfileState extends State<MyProfile> {
   String nickname = '...';
   String profileImageUrl = '';
-  final String userId = '68391556c9c9e1968806a36b';
+  final String userId = '683dc52eb059f8754e24303e';
 
   @override
   void initState() {
