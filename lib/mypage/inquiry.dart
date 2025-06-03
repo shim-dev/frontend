@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:capstone_trial_01/appbar.dart';
 
 class InquiryPage extends StatefulWidget {
@@ -10,6 +12,30 @@ class InquiryPage extends StatefulWidget {
 
 class _InquiryPageState extends State<InquiryPage> {
   int _selectedTabIndex = 0;
+  List<dynamic> inquiries = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchInquiries();
+  }
+
+  Future<void> fetchInquiries() async {
+    final url = Uri.parse('http://127.0.0.1:5000/api/mypage/inquiries?user_id=683dc52eb059f8754e24303e');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        setState(() {
+          inquiries = json.decode(response.body);
+        });
+      } else {
+        print('❌ 1:1 문의 목록 조회 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ 네트워크 오류: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +78,7 @@ class _InquiryPageState extends State<InquiryPage> {
           Expanded(
             child: _selectedTabIndex == 0
                 ? const InquiryForm()
-                : const InquiryHistory(),
+                : InquiryHistory(inquiries: inquiries),
           ),
         ],
       ),
@@ -164,7 +190,7 @@ class _InquiryFormState extends State<InquiryForm> {
               ),
             ],
           ),
-          const SizedBox(height: 20), // 버튼 아래 여백
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -172,74 +198,104 @@ class _InquiryFormState extends State<InquiryForm> {
 }
 
 class InquiryHistory extends StatelessWidget {
-  const InquiryHistory({super.key});
+  final List<dynamic> inquiries;
+
+  const InquiryHistory({super.key, required this.inquiries});
+
+  String formatDate(dynamic date) {
+    try {
+      return date.toString().substring(0, 10);
+    } catch (_) {
+      return '';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final dummyData = [
-      {
-        'title': '비밀번호를 변경했는데 까먹었어요',
-        'date': '2025-05-01',
-        'status': '답변대기',
-        'answer': '',
-      },
-      {
-        'title': '북마크가 전부 사라졌어요 복구해주세요',
-        'date': '2025-05-01',
-        'status': '답변완료',
-        'answer': '안녕하세요. 요청하신 북마크 복구를 완료하였습니다.',
-      },
-    ];
-
     return ListView.separated(
-      itemCount: dummyData.length,
+      itemCount: inquiries.length,
       separatorBuilder: (_, __) => const Divider(),
       itemBuilder: (context, index) {
-        final item = dummyData[index];
+        final item = inquiries[index];
+
+        final isAnswered = item['status'] == '답변 완료';
+        final answerText = item['answer'] ?? '';
+        final answeredAt = item['answered_at'];
+
+        final contentText = item['content'] ?? '';
+        final createdAt = formatDate(item['created_at']);
 
         return ExpansionTile(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item['title']!,
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black)),
-                    const SizedBox(height: 4),
-                    Text(item['date']!,
-                        style: const TextStyle(color: Colors.grey)),
-                  ],
-                ),
+  tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  title: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Expanded(
+        child: Text(
+          item['title'] ?? '',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black),
+        ),
+      ),
+      const SizedBox(width: 8),
+      Text(
+        item['status'] ?? '',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: isAnswered ? const Color(0xFF37966F) : Colors.black87,
+        ),
+      ),
+    ],
+  ),
+  children: [
+    const SizedBox(height: 6),
+    const Text('문의 내용', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold,color: Colors.black)),
+    const SizedBox(height: 4),
+    Text(contentText, style: const TextStyle(fontSize: 14, color: Colors.black)),
+    const SizedBox(height: 8),
+    Text('문의 시간: $createdAt', style: const TextStyle(fontSize: 12, color: Colors.black)),
+
+    // ✅ 이미지 표시 영역
+    if ((item['images'] as List?)?.isNotEmpty ?? false) ...[
+      const SizedBox(height: 12),
+      SizedBox(
+        height: 100,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: item['images'].length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (context, i) {
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                item['images'][i],
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
               ),
-              const SizedBox(width: 12),
-              Text(
-                item['status']!,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: item['status'] == '답변완료'
-                      ? const Color(0xFF37966F)
-                      : Colors.grey[800],
-                ),
-              ),
-            ],
-          ),
-          children: [
-            if (item['status'] == '답변완료')
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Text(item['answer'] ?? '',
-                    style: const TextStyle(fontSize: 15, color: Colors.black)),
-              ),
-          ],
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-          childrenPadding: const EdgeInsets.only(bottom: 12),
-        );
+            );
+          },
+        ),
+      ),
+    ],
+
+    // ✅ 답변 영역
+    if (isAnswered && answerText.isNotEmpty) ...[
+      const SizedBox(height: 16),
+      const Text('답변 내용', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold,color: Colors.black)),
+      const SizedBox(height: 4),
+      Text(answerText, style: const TextStyle(fontSize: 14,color: Colors.black)),
+      if (answeredAt != null && answeredAt != '')
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text('답변 시간: $answeredAt', style: const TextStyle(fontSize: 12, color: Colors.black)),
+        ),
+    ],
+  ],
+);
+
       },
     );
   }
