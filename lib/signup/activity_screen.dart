@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'sleeptime_screen.dart';
+import '../DB/signup/DB_activity.dart';
 
 class ActivityLevelScreen extends StatefulWidget {
-  const ActivityLevelScreen({super.key});
+  final String userId;
+  const ActivityLevelScreen({super.key, required this.userId});
 
   @override
   State<ActivityLevelScreen> createState() => _ActivityLevelScreenState();
@@ -144,14 +146,24 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: ElevatedButton(
-                    onPressed: () {
-                      print('선택된 활동량: ${activityLevels[selectedIndex!]}');
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SleepTimeScreen(),
-                        ),
-                      );
+                    onPressed: () async {
+                      if (selectedIndex != null) {
+                        final activity = activityLevels[selectedIndex!];
+                        final result = await setActivityLevel(widget.userId, activity);
+                        if (result['success']) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SleepTimeScreen(userId: widget.userId),
+                            ),
+                          );
+                        } else {
+                          // 오류 처리
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(result['message'] ?? "오류가 발생했습니다.")),
+                          );
+                        }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
@@ -214,7 +226,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
   }
 }
 
-/// ✅ 라디오 체크 동그라미(내부만 그라데이션)
+///  라디오 체크
 class _RadioGradientDot extends StatelessWidget {
   final bool selected;
   const _RadioGradientDot({required this.selected});

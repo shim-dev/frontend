@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'caffeine_screen.dart';
+import '../DB/signup/DB_sleep.dart';
 
 class SleepTimeScreen extends StatefulWidget {
-  const SleepTimeScreen({super.key});
+  final String userId;
+  const SleepTimeScreen({super.key, required this.userId});
 
   @override
   State<SleepTimeScreen> createState() => _SleepTimeScreenState();
@@ -118,14 +120,20 @@ class _SleepTimeScreenState extends State<SleepTimeScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    print('선택된 수면 시간: ${sleepHours.round()}시간');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CaffeineIntakeScreen(),
-                      ),
-                    );
+                  onPressed: () async {
+                    final result = await setSleepTime(widget.userId, sleepHours.round());
+                    if (result['success']) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CaffeineIntakeScreen(userId: widget.userId),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result['message'] ?? "오류가 발생했습니다.")),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,

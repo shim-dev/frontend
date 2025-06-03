@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'gender_screen.dart'; // <- 반드시 GenderScreen 정의된 파일 import
+import 'gender_screen.dart';
+import '../DB/signup/DB_birth.dart';
 
 class BirthScreen extends StatefulWidget {
-  const BirthScreen({super.key});
+  final String userId;
+  const BirthScreen({super.key, required this.userId});
 
   @override
   State<BirthScreen> createState() => _BirthScreenState();
@@ -170,18 +172,25 @@ class _BirthScreenState extends State<BirthScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    final birthDate =
-                        '$selectedYear-$selectedMonth-$selectedDay';
-                    print('선택한 생일: $birthDate');
+                  // 다음 버튼 onPressed:
+                  onPressed: () async {
+                    final birthDate = '$selectedYear-$selectedMonth-$selectedDay';
 
-                    // 다음 페이지로 이동 (성별 선택 페이지)
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const GenderScreen(),
-                      ),
-                    );
+                    final result = await setBirth(widget.userId, birthDate);
+
+                    if (result['success']) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GenderScreen(userId: widget.userId),
+                        ),
+                      );
+                    } else {
+                      // 에러 메시지 띄우기 (예시)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result['message'] ?? '생년월일 저장 실패')),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,

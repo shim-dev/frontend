@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'nickname_screen.dart';
+import '../DB/signup/DB_signup.dart';
+
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -27,13 +29,6 @@ class _SignupScreenState extends State<SignupScreen> {
     'daum.net',
     'nate.com',
     '직접 입력',
-  ];
-
-  // 가상 "이미 가입된 이메일"
-  final List<String> _dummyUsedEmailList = [
-    'chaelim@gmail.com',
-    'admin@naver.com',
-    'test@hanmail.net'
   ];
 
   String? _emailError;
@@ -72,8 +67,6 @@ class _SignupScreenState extends State<SignupScreen> {
       _emailError = '이메일 아이디 형식이 올바르지 않습니다.';
     } else if (_selectedDomain == '직접 입력' && !_customDomainController.text.contains('.')) {
       _emailError = '도메인을 올바르게 입력하세요 (예: domain.com)';
-    } else if (email.isNotEmpty && _dummyUsedEmailList.contains(email)) {
-      _emailError = '이미 가입된 이메일입니다.';
     } else {
       _emailError = null;
     }
@@ -324,11 +317,24 @@ class _SignupScreenState extends State<SignupScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const NicknameScreen()),
-                      );
+                    onPressed: () async {
+                      final result = await signupUser(fullEmail, _passwordController.text);
+
+                      if (result['success']) {
+                        setState(() {
+                          _emailError = null; // 에러 메시지 없앰 (화면 정리용)
+                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => NicknameScreen(userId: result['user_id']),
+                          ),
+                        );
+                      } else {
+                        setState(() {
+                          _emailError = result['message']; // 실패 시 에러 메시지 띄움
+                        });
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
@@ -432,10 +438,10 @@ class GradientUnderlineTextField extends StatelessWidget {
     final deviceHeight = MediaQuery.of(context).size.height;
 
     final hasFocus = focusNode?.hasFocus ?? false;
-    final fontSize = deviceWidth * 0.043; // 16~18px 전후
-    final hintFontSize = deviceWidth * 0.035; // 13~15px 전후
-    final paddingV = deviceHeight * 0.012; // 세로 padding
-    final underlineHeight = deviceHeight * 0.0022; // 약 1.7~2.5px, 최소/최대 제한
+    final fontSize = deviceWidth * 0.043;
+    final hintFontSize = deviceWidth * 0.035;
+    final paddingV = deviceHeight * 0.012;
+    final underlineHeight = deviceHeight * 0.0022;
 
     return Stack(
       children: [
@@ -467,7 +473,7 @@ class GradientUnderlineTextField extends StatelessWidget {
           right: 0,
           bottom: 0,
           child: Container(
-            height: underlineHeight.clamp(1.4, 2.5), // 최소 1.4, 최대 2.5로 제한
+            height: underlineHeight.clamp(1.4, 2.5),
             decoration: BoxDecoration(
               gradient: hasFocus
                   ? const LinearGradient(
