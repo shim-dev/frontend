@@ -15,7 +15,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController idController = TextEditingController();
   final TextEditingController pwController = TextEditingController();
   final TextEditingController customDomainController = TextEditingController();
+  // 채림 언니 로그인 유지 파트 시작 //
   final storage = FlutterSecureStorage();
+  // 채림 언니 로그인 유지 파트 끝 //
   final FocusNode _idFocus = FocusNode();
   final FocusNode _pwFocus = FocusNode();
   final FocusNode _customDomainFocus = FocusNode();
