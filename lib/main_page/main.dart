@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shim/DB/db_recipe.dart';
 import 'package:shim/DB/db_record.dart';
 import 'package:shim/main_page/breakfast_log.dart';
 import 'package:shim/main_page/dinner_log.dart';
@@ -22,6 +23,7 @@ import 'package:shim/main_page/sleep_log.dart'; // 파일 경로에 맞게
 import 'package:shim/main_page/snack_log.dart';
 import 'package:shim/main_page/splash_screen.dart'; // 나중에 수정
 import 'package:shim/main_page/water_log.dart';
+import 'package:shim/recipe_page/recipe_search_result.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 void main() async {
@@ -260,7 +262,7 @@ class _ExampleScreenState extends State<ExampleScreen> {
         onDayChanged: _onDayChanged,
         allRecords: _allRecords,
       ),
-      //PeopleTab(onFoodChanged: onFoodChanged),
+      PeopleTab(onFoodChanged: onFoodChanged),
       //MyTab(nickname: nickname ?? '사용자', onNicknameChanged: _loadNickname),
     ];
 
@@ -1628,301 +1630,302 @@ class CalendarTab extends StatelessWidget {
 
 // // ========== 아래는 나머지 탭 예시 ============
 //
-// class PeopleTab extends StatefulWidget {
-//   @override
-//   _PeopleTabState createState() => _PeopleTabState();
-//
-//   final Future<void> Function() onFoodChanged;
-//   const PeopleTab({super.key, required this.onFoodChanged});
-// }
-//
-// class _PeopleTabState extends State<PeopleTab> {
-//   final TextEditingController _searchController = TextEditingController();
-//   int selectedTab = 0;
-//   final bgPurple = const Color(0xFF8F80F9);
-//   final bgMint = const Color(0xFF5ED593);
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final height = MediaQuery.of(context).size.height;
-//     final width = MediaQuery.of(context).size.width;
-//
-//     // 퍼센트로 간격을 맞춰주기 위한 함수
-//     double w(double percent) => width * percent / 100;
-//     double h(double percent) => height * percent / 100;
-//
-//     return Scaffold(
-//       // 이 옵션이 상태바(상단바) 흰색 현상 없애줌
-//       extendBodyBehindAppBar: true,
-//       backgroundColor: Color(0xFFF9F8FC),
-//       body: Stack(
-//         children: [
-//           SingleChildScrollView(
-//             physics: BouncingScrollPhysics(),
-//             child: Column(
-//               children: [
-//                 // 1. 상단 그라데이션 카드 (완전 동일하게!)
-//                 GradientHeaderCard(
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.center,
-//                     children: [
-//                       SizedBox(height: h(1.7)), // 상태바와 내용 여백
-//                       Text(
-//                         '저속노화 레시피 검색',
-//                         style: TextStyle(
-//                           fontSize: 23,
-//                           fontWeight: FontWeight.bold,
-//                           color: Colors.white,
-//                         ),
-//                       ),
-//                       SizedBox(height: 9),
-//                       Text(
-//                         '느린 발걸음, 같이 시작해봐요!',
-//                         style: TextStyle(
-//                           fontSize: 16,
-//                           fontWeight: FontWeight.w400,
-//                           color: Colors.white.withOpacity(0.92),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//
-//                 // 2. 검색창과 탭 사이 여백 (적당히 34~40)
-//                 SizedBox(height: 38),
-//
-//                 // 3. 검색창 (위치 조정 쉬움)
-//                 Padding(
-//                   padding: EdgeInsets.symmetric(horizontal: 24),
-//                   child: Container(
-//                     decoration: BoxDecoration(
-//                       gradient: LinearGradient(
-//                         colors: [
-//                           bgPurple.withOpacity(0.11),
-//                           bgMint.withOpacity(0.11),
-//                         ],
-//                         begin: Alignment.topLeft,
-//                         end: Alignment.bottomRight,
-//                       ),
-//                       borderRadius: BorderRadius.circular(18),
-//                       boxShadow: [
-//                         BoxShadow(
-//                           color: Colors.black12,
-//                           blurRadius: 8,
-//                           offset: Offset(0, 3),
-//                         ),
-//                       ],
-//                     ),
-//                     child: Row(
-//                       children: [
-//                         Expanded(
-//                           child: TextField(
-//                             controller: _searchController,
-//                             style: TextStyle(
-//                               color: Colors.black,
-//                               fontWeight: FontWeight.w600,
-//                               fontSize: 15,
-//                             ),
-//                             decoration: InputDecoration(
-//                               hintText: '검색어 또는 키워드를 입력하세요',
-//                               hintStyle: TextStyle(
-//                                 color: Colors.black54,
-//                                 fontWeight: FontWeight.w500,
-//                                 fontSize: 14,
-//                               ),
-//                               border: InputBorder.none,
-//                               contentPadding: EdgeInsets.symmetric(
-//                                 horizontal: 18,
-//                                 vertical: 14,
-//                               ),
-//                             ),
-//                             onSubmitted: (query) {
-//                               if (query.trim().isEmpty) return;
-//                               Navigator.push(
-//                                 context,
-//                                 MaterialPageRoute(
-//                                   builder:
-//                                       (_) => RecipeSearchResultPage(
-//                                     query: query,
-//                                     onFoodChanged: widget.onFoodChanged,
-//                                   ),
-//                                 ),
-//                               );
-//                             },
-//                           ),
-//                         ),
-//                         Padding(
-//                           padding: EdgeInsets.only(right: 14),
-//                           child: GestureDetector(
-//                             onTap: () {
-//                               final query = _searchController.text.trim();
-//                               if (query.isEmpty) return;
-//                               Navigator.push(
-//                                 context,
-//                                 MaterialPageRoute(
-//                                   builder: (_) {
-//                                     print('🚀 RecipeSearchResultPage 호출됨');
-//                                     print(
-//                                       '📡 onFoodChanged is null? → ${widget.onFoodChanged == null}',
-//                                     );
-//                                     return RecipeSearchResultPage(
-//                                       query: query,
-//                                       onFoodChanged: widget.onFoodChanged,
-//                                     );
-//                                   },
-//                                 ),
-//                               );
-//                             },
-//                             child: Icon(
-//                               Icons.search,
-//                               color: bgPurple,
-//                               size: 26,
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//
-//                 // 4. 검색창~탭바 여백
-//                 SizedBox(height: 22),
-//
-//                 // 5. 추천/최근검색어 탭바
-//                 Padding(
-//                   padding: EdgeInsets.symmetric(horizontal: 16),
-//                   child: Container(
-//                     height: 42,
-//                     decoration: BoxDecoration(
-//                       color: Color(0xFFEFEFEF),
-//                       borderRadius: BorderRadius.circular(22),
-//                     ),
-//                     child: Stack(
-//                       children: [
-//                         AnimatedAlign(
-//                           alignment:
-//                           selectedTab == 0
-//                               ? Alignment.centerLeft
-//                               : Alignment.centerRight,
-//                           duration: Duration(milliseconds: 220),
-//                           child: Container(
-//                             width: (width - 32) / 2,
-//                             height: 42,
-//                             decoration: BoxDecoration(
-//                               gradient: LinearGradient(
-//                                 colors: [bgPurple, bgMint],
-//                                 begin: Alignment.centerLeft,
-//                                 end: Alignment.centerRight,
-//                               ),
-//                               borderRadius: BorderRadius.circular(22),
-//                             ),
-//                           ),
-//                         ),
-//                         Row(
-//                           children: [
-//                             Expanded(
-//                               child: GestureDetector(
-//                                 onTap: () => setState(() => selectedTab = 0),
-//                                 child: Container(
-//                                   height: 42,
-//                                   alignment: Alignment.center,
-//                                   color: Colors.transparent,
-//                                   child: Text(
-//                                     "추천 검색어",
-//                                     style: TextStyle(
-//                                       fontWeight: FontWeight.w600,
-//                                       fontSize: 15,
-//                                       color:
-//                                       selectedTab == 0
-//                                           ? Colors.white
-//                                           : Color(0xFFADADAD),
-//                                       fontFamily: 'Pretendard',
-//                                     ),
-//                                   ),
-//                                 ),
-//                               ),
-//                             ),
-//                             Expanded(
-//                               child: GestureDetector(
-//                                 onTap: () => setState(() => selectedTab = 1),
-//                                 child: Container(
-//                                   height: 42,
-//                                   alignment: Alignment.center,
-//                                   color: Colors.transparent,
-//                                   child: Text(
-//                                     "최근 본 레시피",
-//                                     style: TextStyle(
-//                                       fontWeight: FontWeight.w600,
-//                                       fontSize: 15,
-//                                       color:
-//                                       selectedTab == 1
-//                                           ? Colors.white
-//                                           : Color(0xFFADADAD),
-//                                       fontFamily: 'Pretendard',
-//                                     ),
-//                                   ),
-//                                 ),
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//
-//                 // 6. 탭 아래 여백
-//                 SizedBox(height: 14),
-//
-//                 // 7. 탭 컨텐츠(키워드 or 최근 레시피)
-//                 Padding(
-//                   padding: EdgeInsets.symmetric(horizontal: 5, vertical: 8),
-//                   child:
-//                   selectedTab == 0
-//                       ? FutureBuilder<List<String>>(
-//                     future: getKeywords(), // ← 여기를 실시간 함수로!
-//                     builder: (context, snapshot) {
-//                       if (!snapshot.hasData) {
-//                         return Center(
-//                           child: CircularProgressIndicator(),
-//                         );
-//                       }
-//                       final keywords = snapshot.data!;
-//                       return Wrap(
-//                         spacing: 12,
-//                         runSpacing: 10,
-//                         children:
-//                         keywords
-//                             .map(
-//                               (keyword) =>
-//                               gradientBorderTag(keyword),
-//                         )
-//                             .toList(),
-//                       );
-//                     },
-//                   )
-//                       : Center(
-//                     child: Text(
-//                       "최근 본 레시피가 여기에 표시됩니다.",
-//                       style: TextStyle(
-//                         color: Color(0xFF555555),
-//                         fontSize: 14,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//
-//                 SizedBox(height: 30), // 하단 여백
-//               ],
-//             ),
-//           ),
-//           // 상태바 배경 하얗게 안 나오게 해주는 SafeArea (필요하면 주석)
-//           // SafeArea(top: false, child: Container()),
-//         ],
-//       ),
-//     );
-//   }
-// }
+class PeopleTab extends StatefulWidget {
+  @override
+  _PeopleTabState createState() => _PeopleTabState();
+
+  final Future<void> Function() onFoodChanged;
+  const PeopleTab({super.key, required this.onFoodChanged});
+}
+
+class _PeopleTabState extends State<PeopleTab> {
+  final TextEditingController _searchController = TextEditingController();
+  int selectedTab = 0;
+  final bgPurple = const Color(0xFF8F80F9);
+  final bgMint = const Color(0xFF5ED593);
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
+
+    // 퍼센트로 간격을 맞춰주기 위한 함수
+    double w(double percent) => width * percent / 100;
+    double h(double percent) => height * percent / 100;
+
+    return Scaffold(
+      // 이 옵션이 상태바(상단바) 흰색 현상 없애줌
+      extendBodyBehindAppBar: true,
+      backgroundColor: Color(0xFFF9F8FC),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            physics: BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                // 1. 상단 그라데이션 카드 (완전 동일하게!)
+                GradientHeaderCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(height: h(1.7)), // 상태바와 내용 여백
+                      Text(
+                        '저속노화 레시피 검색',
+                        style: TextStyle(
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 9),
+                      Text(
+                        '느린 발걸음, 같이 시작해봐요!',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white.withOpacity(0.92),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 2. 검색창과 탭 사이 여백 (적당히 34~40)
+                SizedBox(height: 38),
+
+                // 3. 검색창 (위치 조정 쉬움)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          bgPurple.withOpacity(0.11),
+                          bgMint.withOpacity(0.11),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: '검색어 또는 키워드를 입력하세요',
+                              hintStyle: TextStyle(
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 14,
+                              ),
+                            ),
+                            onSubmitted: (query) {
+                              if (query.trim().isEmpty) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => RecipeSearchResultPage(
+                                        query: query,
+                                        onFoodChanged: widget.onFoodChanged,
+                                      ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(right: 14),
+                          child: GestureDetector(
+                            onTap: () {
+                              final query = _searchController.text.trim();
+                              if (query.isEmpty) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) {
+                                    print('🚀 RecipeSearchResultPage 호출됨');
+                                    print(
+                                      '📡 onFoodChanged is null? → ${widget.onFoodChanged == null}',
+                                    );
+                                    return RecipeSearchResultPage(
+                                      query: query,
+                                      onFoodChanged: widget.onFoodChanged,
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                            child: Icon(
+                              Icons.search,
+                              color: bgPurple,
+                              size: 26,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // 4. 검색창~탭바 여백
+                SizedBox(height: 22),
+
+                // 5. 추천/최근검색어 탭바
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Color(0xFFEFEFEF),
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Stack(
+                      children: [
+                        AnimatedAlign(
+                          alignment:
+                              selectedTab == 0
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
+                          duration: Duration(milliseconds: 220),
+                          child: Container(
+                            width: (width - 32) / 2,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [bgPurple, bgMint],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => selectedTab = 0),
+                                child: Container(
+                                  height: 42,
+                                  alignment: Alignment.center,
+                                  color: Colors.transparent,
+                                  child: Text(
+                                    "추천 검색어",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                      color:
+                                          selectedTab == 0
+                                              ? Colors.white
+                                              : Color(0xFFADADAD),
+                                      fontFamily: 'Pretendard',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => selectedTab = 1),
+                                child: Container(
+                                  height: 42,
+                                  alignment: Alignment.center,
+                                  color: Colors.transparent,
+                                  child: Text(
+                                    "최근 본 레시피",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                      color:
+                                          selectedTab == 1
+                                              ? Colors.white
+                                              : Color(0xFFADADAD),
+                                      fontFamily: 'Pretendard',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // 6. 탭 아래 여백
+                SizedBox(height: 14),
+
+                // 7. 탭 컨텐츠(키워드 or 최근 레시피)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+                  child:
+                      selectedTab == 0
+                          ? FutureBuilder<List<String>>(
+                            future: getKeywords(), // ← 여기를 실시간 함수로!
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              final keywords = snapshot.data!;
+                              return Wrap(
+                                spacing: 12,
+                                runSpacing: 10,
+                                children:
+                                    keywords
+                                        .map(
+                                          (keyword) =>
+                                              gradientBorderTag(keyword),
+                                        )
+                                        .toList(),
+                              );
+                            },
+                          )
+                          : Center(
+                            child: Text(
+                              "최근 본 레시피가 여기에 표시됩니다.",
+                              style: TextStyle(
+                                color: Color(0xFF555555),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                ),
+
+                SizedBox(height: 30), // 하단 여백
+              ],
+            ),
+          ),
+          // 상태바 배경 하얗게 안 나오게 해주는 SafeArea (필요하면 주석)
+          // SafeArea(top: false, child: Container()),
+        ],
+      ),
+    );
+  }
+}
+
 //
 // ///// 마이페이지 /////
 // class MyTab extends StatefulWidget {
