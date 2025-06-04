@@ -201,12 +201,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             email,
                             password,
                           ); // 실제 로그인 요청
-
+                          
+                          // 채림 언니 로그인 유지 파트 시작 //
                           if (result['success']) {
                             await storage.write(
                               key: 'user_id',
                               value: result['userId'],
-                            );
+                            ); // 채림 언니 로그인 유지 파트 끝 //
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
