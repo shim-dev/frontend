@@ -3,11 +3,11 @@
 //import 'package:shim/main_page/recipe_search_result.dart';
 //import 'package:capstone_trial_01/signup_test.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shim/DB/db_recipe.dart';
 import 'package:shim/DB/db_record.dart';
+import 'package:shim/DB/signup/DB_nickname.dart';
 import 'package:shim/main_page/breakfast_log.dart';
 import 'package:shim/main_page/dinner_log.dart';
 import 'package:shim/main_page/lunch_log.dart';
@@ -72,10 +72,9 @@ class _ExampleScreenState extends State<ExampleScreen> {
   String? nickname;
 
   Future<void> _loadNickname() async {
-    final storage = FlutterSecureStorage();
-    String? name = await storage.read(key: 'nickname');
+    final name = await fetchNicknameFromServer();
     setState(() {
-      nickname = name ?? '사용자';
+      nickname = name;
     });
   }
   // 닉네임 변경 콜백 끝 //

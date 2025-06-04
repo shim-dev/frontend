@@ -1,9 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-// secure_storage 파트 test //
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-// secure_storage 파트 test 끝 //
 import 'package:image_picker/image_picker.dart';
 
 import '../DB/signup/DB_nickname.dart';
@@ -32,9 +29,6 @@ class NicknameScreen extends StatefulWidget {
 class _NicknameScreenState extends State<NicknameScreen> {
   final TextEditingController _nicknameController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  // test //
-  final FlutterSecureStorage _storage = FlutterSecureStorage(); // ✅ 추가
-  // test //
 
   String? _nicknameError;
   bool _isAvailable = false;
@@ -302,8 +296,6 @@ class _NicknameScreenState extends State<NicknameScreen> {
                       print("서버 응답: $result");
 
                       if (result['success']) {
-                        await _storage.write(key: 'nickname', value: nickname);
-
                         Navigator.push(
                           context,
                           MaterialPageRoute(
