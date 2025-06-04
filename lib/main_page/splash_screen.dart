@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shim/main_page/signup_test.dart';
+import 'package:shim/signup/welcome_screen.dart';
 
 import 'main.dart';
 
@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
     } else {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => SignupTestPage()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => WelcomeScreen()));
     }
   }
 
