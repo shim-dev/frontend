@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../DB/signup/DB_login.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,7 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController idController = TextEditingController();
   final TextEditingController pwController = TextEditingController();
   final TextEditingController customDomainController = TextEditingController();
-
+  final storage = FlutterSecureStorage();
   final FocusNode _idFocus = FocusNode();
   final FocusNode _pwFocus = FocusNode();
   final FocusNode _customDomainFocus = FocusNode();
@@ -160,11 +161,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           final result = await loginUser(email, password); // 실제 로그인 요청
 
                           if (result['success']) {
+                            await storage.write(key: 'user_id', value: result['userId']);
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => ExampleScreen(/*userId: result['userId']*/), // 메인 페이지 이동
-                              ),
+                              MaterialPageRoute(builder: (context) => ExampleScreen()),
                             );
                           } else {
                             setState(() {
