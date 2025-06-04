@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'birth_screen.dart';
 import '../DB/signup/DB_nickname.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import '../db/firebase/firebase_storage.dart';
 
 
 // <- 커스텀 화살표 아이콘
@@ -32,11 +35,21 @@ class _NicknameScreenState extends State<NicknameScreen> {
 
   String? _nicknameError;
   bool _isAvailable = false;
+  File? _profileImage;
 
   @override
   void initState() {
     super.initState();
     _focusNode.addListener(_update);
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
   }
 
   void _update() => setState(() {});
@@ -72,7 +85,7 @@ class _NicknameScreenState extends State<NicknameScreen> {
           ),
           centerTitle: true,
           title: const Text(
-            '닉네임',
+            '프로필 설정',
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
           ),
           bottom: PreferredSize(
@@ -105,16 +118,43 @@ class _NicknameScreenState extends State<NicknameScreen> {
           ),
         ),
       ),
+
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: padding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(height: deviceHeight * 0.05),
-            Image.asset(
-              'assets/icon/turtle_nickname.png',
-              width: deviceWidth * 0.7,
-              height: deviceWidth * 0.7,
+
+            // 이미지 아바타 & 버튼
+            Center(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: deviceWidth * 0.18,
+                    backgroundImage: _profileImage != null
+                        ? FileImage(_profileImage!)
+                        : const AssetImage('assets/icon/turtle.png') as ImageProvider,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.grey),
+                        ),
+                        padding: const EdgeInsets.all(6),
+                        child: const Icon(Icons.camera_alt, size: 20, color: Colors.black,),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             SizedBox(height: deviceHeight * 0.03),
             const Text(
@@ -215,7 +255,10 @@ class _NicknameScreenState extends State<NicknameScreen> {
                 ),
                 child: ElevatedButton(
                   onPressed: () async {
+
+
                     final nickname = _nicknameController.text.trim();
+                    print("닉네임: $nickname");
 
                     if (!RegExp(r'^[가-힣a-zA-Z0-9]{2,12}$').hasMatch(nickname)) {
                       setState(() {
@@ -224,19 +267,33 @@ class _NicknameScreenState extends State<NicknameScreen> {
                       return;
                     }
 
-                    final result = await setNickname(widget.userId, nickname);
-                    if (result['success']) {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => BirthScreen(userId: widget.userId))
+                    String? imageUrl;
+                    if (_profileImage != null) {
+                      print("이미지 업로드 시작");
+                      imageUrl = await uploadProfileImageToFirebase(_profileImage!, widget.userId);
+                      print("업로드된 이미지 URL: $imageUrl");
+                    }
 
-                      );
-                    } else {
-                      setState(() {
-                        _nicknameError = result['message'];
-                      });
+                    try {
+                      print("닉네임 서버 전송 시작");
+                      final result = await setNickname(widget.userId, nickname, imageUrl);
+                      print("서버 응답: $result");
+
+                      if (result['success']) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => BirthScreen(userId: widget.userId)),
+                        );
+                      } else {
+                        setState(() {
+                          _nicknameError = result['message'];
+                        });
+                      }
+                    } catch (e) {
+                      print(" 서버 오류 발생: $e");
                     }
                   },
+
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
