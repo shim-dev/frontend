@@ -1,6 +1,6 @@
-# capstone_trial_01
+# shim
 
-A new Flutter project.
+capstone_design_project
 
 ## Getting Started
 

@@ -10,7 +10,9 @@ class FoodCache {
     BuildContext context,
   ) async {
     if (_cachedFoodList != null) return _cachedFoodList!;
-    String jsonString = await rootBundle.loadString('assets/food_list.json');
+    String jsonString = await rootBundle.loadString(
+      'assets/converted_food_data.json',
+    );
     List<dynamic> jsonData = json.decode(jsonString);
     _cachedFoodList = List<Map<String, dynamic>>.from(jsonData);
     return _cachedFoodList!;
