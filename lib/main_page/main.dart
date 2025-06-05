@@ -3,11 +3,11 @@
 //import 'package:shim/main_page/recipe_search_result.dart';
 //import 'package:capstone_trial_01/signup_test.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shim/DB/db_recipe.dart';
 import 'package:shim/DB/db_record.dart';
+import 'package:shim/DB/signup/DB_nickname.dart';
 import 'package:shim/main_page/breakfast_log.dart';
 import 'package:shim/main_page/dinner_log.dart';
 import 'package:shim/main_page/lunch_log.dart';
@@ -23,6 +23,7 @@ import 'package:shim/main_page/sleep_log.dart'; // 파일 경로에 맞게
 import 'package:shim/main_page/snack_log.dart';
 import 'package:shim/main_page/splash_screen.dart'; // 나중에 수정
 import 'package:shim/main_page/water_log.dart';
+import 'package:shim/mypage/mypage.dart';
 import 'package:shim/recipe_page/recipe_search_result.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -72,10 +73,9 @@ class _ExampleScreenState extends State<ExampleScreen> {
   String? nickname;
 
   Future<void> _loadNickname() async {
-    final storage = FlutterSecureStorage();
-    String? name = await storage.read(key: 'nickname');
+    final name = await fetchNicknameFromServer();
     setState(() {
-      nickname = name ?? '사용자';
+      nickname = name;
     });
   }
   // 닉네임 변경 콜백 끝 //
@@ -264,6 +264,7 @@ class _ExampleScreenState extends State<ExampleScreen> {
       ),
       PeopleTab(onFoodChanged: onFoodChanged),
       //MyTab(nickname: nickname ?? '사용자', onNicknameChanged: _loadNickname),
+      MyTab(),
     ];
 
     return Scaffold(
