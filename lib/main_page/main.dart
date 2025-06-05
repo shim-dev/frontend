@@ -23,6 +23,7 @@ import 'package:shim/main_page/sleep_log.dart'; // 파일 경로에 맞게
 import 'package:shim/main_page/snack_log.dart';
 import 'package:shim/main_page/splash_screen.dart'; // 나중에 수정
 import 'package:shim/main_page/water_log.dart';
+import 'package:shim/mypage/mypage.dart';
 import 'package:shim/recipe_page/recipe_search_result.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -263,6 +264,7 @@ class _ExampleScreenState extends State<ExampleScreen> {
       ),
       PeopleTab(onFoodChanged: onFoodChanged),
       //MyTab(nickname: nickname ?? '사용자', onNicknameChanged: _loadNickname),
+      MyTab(),
     ];
 
     return Scaffold(
