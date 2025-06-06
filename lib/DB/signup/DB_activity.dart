@@ -7,7 +7,7 @@ Future<Map<String, dynamic>> setActivityLevel(
   String activityLevel,
 ) async {
   final response = await http.post(
-    Uri.parse('http://175.192.77.229:5000/set_activity'),
+    Uri.parse('http://125.128.179.84:5000/set_activity'),
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({'user_id': userId, 'activity_level': activityLevel}),
   );

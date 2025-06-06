@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 Future<List<dynamic>?> fetchInquiriesFromDB(String userId) async {
   final url = Uri.parse(
-    'http://175.192.77.229:5000/api/mypage/inquiries?user_id=$userId',
+    'http://125.128.179.84:5000/api/mypage/inquiries?user_id=$userId',
   );
 
   try {

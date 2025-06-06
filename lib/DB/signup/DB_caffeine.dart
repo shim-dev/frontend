@@ -7,7 +7,7 @@ Future<Map<String, dynamic>> setCaffeineCups(
   int caffeineCup,
 ) async {
   final response = await http.post(
-    Uri.parse('http://175.192.77.229:5000/set_caffeine'),
+    Uri.parse('http://125.128.179.84:5000/set_caffeine'),
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({'user_id': userId, 'caffeine_cup': caffeineCup}),
   );

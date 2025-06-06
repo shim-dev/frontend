@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shim/DB/db_helper.dart';
 
-const String apiBase = 'http://175.192.77.229:5000/api/mypage';
+const String apiBase = 'http://125.128.179.84:5000/api/mypage';
 
 Future<List<dynamic>?> fetchBookmarkRecipesFromDB() async {
   final userId = await getUserId(); // 또는 필요하면 매개변수로 받기
