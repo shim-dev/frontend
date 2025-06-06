@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shim/DB/db_record.dart';
+import 'package:shim/DB/recipe/db_recent_seen_recipe.dart';
 import 'package:shim/DB/recipe/db_recipe.dart';
 import 'package:shim/DB/signup/DB_nickname.dart';
 import 'package:shim/main_page/breakfast_log.dart';
@@ -24,6 +25,7 @@ import 'package:shim/main_page/snack_log.dart';
 import 'package:shim/main_page/splash_screen.dart'; // 나중에 수정
 import 'package:shim/main_page/water_log.dart';
 import 'package:shim/mypage/mypage.dart';
+import 'package:shim/recipe_page/recipe_detail_page.dart';
 import 'package:shim/recipe_page/recipe_search_result.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -1883,7 +1885,7 @@ class _PeopleTabState extends State<PeopleTab> {
                   child:
                       selectedTab == 0
                           ? FutureBuilder<List<String>>(
-                            future: getKeywords(), // ← 여기를 실시간 함수로!
+                            future: getKeywords(),
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) {
                                 return Center(
@@ -1904,17 +1906,99 @@ class _PeopleTabState extends State<PeopleTab> {
                               );
                             },
                           )
-                          : Center(
-                            child: Text(
-                              "최근 본 레시피가 여기에 표시됩니다.",
-                              style: TextStyle(
-                                color: Color(0xFF555555),
-                                fontSize: 14,
-                              ),
-                            ),
+                          : FutureBuilder<List<Map<String, dynamic>>>(
+                            future: getRecentRecipes(), // 📌 너가 만든 최근 본 레시피 함수
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              final recipes = snapshot.data!;
+                              if (recipes.isEmpty) {
+                                return Center(
+                                  child: Text(
+                                    "최근 본 레시피가 없습니다.",
+                                    style: TextStyle(
+                                      color: Color(0xFF555555),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return ListView.separated(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemCount: recipes.length,
+                                separatorBuilder:
+                                    (_, __) => SizedBox(height: 10),
+                                itemBuilder: (context, index) {
+                                  final recipe = recipes[index];
+                                  return buildRecipeCard(
+                                    recipe,
+                                    onTap: () async {
+                                      await addRecentRecipe(
+                                        recipe['_id'],
+                                      ); // 최근 본 레시피 등록
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => RecipeDetailPage(
+                                                recipe: recipe,
+                                              ), // ✅ 여기가 핵심!
+                                        ),
+                                      );
+                                    },
+                                    onDelete: () async {
+                                      await deleteRecentRecipe(
+                                        recipe['_id'],
+                                      ); // ✅ 삭제 함수 호출
+                                      setState(() {}); // ✅ 삭제 후 UI 갱신
+                                    },
+                                  );
+                                },
+                              );
+                            },
                           ),
                 ),
 
+                // Padding(
+                //   padding: EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+                //   child:
+                //       selectedTab == 0
+                //           ? FutureBuilder<List<String>>(
+                //             future: getKeywords(), // ← 여기를 실시간 함수로!
+                //             builder: (context, snapshot) {
+                //               if (!snapshot.hasData) {
+                //                 return Center(
+                //                   child: CircularProgressIndicator(),
+                //                 );
+                //               }
+                //               final keywords = snapshot.data!;
+                //               return Wrap(
+                //                 spacing: 12,
+                //                 runSpacing: 10,
+                //                 children:
+                //                     keywords
+                //                         .map(
+                //                           (keyword) =>
+                //                               gradientBorderTag(keyword),
+                //                         )
+                //                         .toList(),
+                //               );
+                //             },
+                //           )
+                //           : Center(
+                //             child: Text(
+                //               "최근 본 레시피가 여기에 표시됩니다.",
+                //               style: TextStyle(
+                //                 color: Color(0xFF555555),
+                //                 fontSize: 14,
+                //               ),
+                //             ),
+                //           ),
+                // ),
                 SizedBox(height: 30), // 하단 여백
               ],
             ),
@@ -1922,6 +2006,320 @@ class _PeopleTabState extends State<PeopleTab> {
           // 상태바 배경 하얗게 안 나오게 해주는 SafeArea (필요하면 주석)
           // SafeArea(top: false, child: Container()),
         ],
+      ),
+    );
+  }
+
+  // Widget buildRecipeCard(
+  //   Map<String, dynamic> recipe, {
+  //   VoidCallback? onTap,
+  //   VoidCallback? onDelete,
+  // }) {
+  //   final bgPurple = Color(0xFF8F80F9);
+  //   final bgMint = Color(0xFF5ED593);
+  //
+  //   return GestureDetector(
+  //     onTap: onTap,
+  //     child: Container(
+  //       margin: EdgeInsets.symmetric(vertical: 8),
+  //       child: Stack(
+  //         children: [
+  //           Container(
+  //             decoration: BoxDecoration(
+  //               gradient: LinearGradient(
+  //                 colors: [
+  //                   bgPurple.withOpacity(0.11),
+  //                   bgMint.withOpacity(0.11),
+  //                 ],
+  //                 begin: Alignment.topLeft,
+  //                 end: Alignment.bottomRight,
+  //               ),
+  //               borderRadius: BorderRadius.circular(18),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black12,
+  //                   blurRadius: 8,
+  //                   offset: Offset(0, 3),
+  //                 ),
+  //               ],
+  //             ),
+  //             child: Padding(
+  //               padding: EdgeInsets.all(14),
+  //               child: Row(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   ClipRRect(
+  //                     borderRadius: BorderRadius.circular(12),
+  //                     child: Image.network(
+  //                       recipe['imageUrl'] ?? '',
+  //                       width: 85,
+  //                       height: 85,
+  //                       fit: BoxFit.cover,
+  //                       errorBuilder:
+  //                           (context, error, stackTrace) => Container(
+  //                             width: 85,
+  //                             height: 85,
+  //                             color: Colors.grey[300],
+  //                           ),
+  //                     ),
+  //                   ),
+  //                   SizedBox(width: 14),
+  //                   Expanded(
+  //                     child: Column(
+  //                       crossAxisAlignment: CrossAxisAlignment.start,
+  //                       children: [
+  //                         Text(
+  //                           recipe['name'] ?? '이름 없음',
+  //                           style: TextStyle(
+  //                             fontWeight: FontWeight.w700,
+  //                             fontSize: 16,
+  //                             color: Colors.black,
+  //                             fontFamily: 'Pretendard',
+  //                           ),
+  //                         ),
+  //                         SizedBox(height: 3),
+  //                         if (recipe['keywords'] != null)
+  //                           Text(
+  //                             (recipe['keywords'] as List)
+  //                                 .map((e) => '#$e')
+  //                                 .join('  '),
+  //                             style: TextStyle(
+  //                               fontSize: 13,
+  //                               color: Colors.grey[700],
+  //                               fontWeight: FontWeight.w500,
+  //                               fontFamily: 'Pretendard',
+  //                             ),
+  //                           ),
+  //                         if (recipe['desc'] != null) ...[
+  //                           SizedBox(height: 4),
+  //                           Text(
+  //                             recipe['desc'],
+  //                             style: TextStyle(
+  //                               fontSize: 12.5,
+  //                               color: Colors.black.withOpacity(0.7),
+  //                               fontFamily: 'Pretendard',
+  //                             ),
+  //                             maxLines: 2,
+  //                             overflow: TextOverflow.ellipsis,
+  //                           ),
+  //                         ],
+  //                         SizedBox(height: 6),
+  //                         Row(
+  //                           children: [
+  //                             Icon(
+  //                               Icons.timer,
+  //                               size: 14,
+  //                               color: Colors.black54,
+  //                             ),
+  //                             SizedBox(width: 4),
+  //                             Text(
+  //                               '${recipe['time'] ?? '?'}분',
+  //                               style: TextStyle(
+  //                                 fontSize: 12,
+  //                                 color: Colors.black87,
+  //                               ),
+  //                             ),
+  //                             SizedBox(width: 12),
+  //                             Text(
+  //                               '🔥 난이도 ${recipe['level'] ?? '?'}',
+  //                               style: TextStyle(
+  //                                 fontSize: 12,
+  //                                 color: Colors.black87,
+  //                               ),
+  //                             ),
+  //                             SizedBox(width: 12),
+  //                             Text(
+  //                               '👤 ${recipe['serving'] ?? '?'}인분',
+  //                               style: TextStyle(
+  //                                 fontSize: 12,
+  //                                 color: Colors.black87,
+  //                               ),
+  //                             ),
+  //                           ],
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget buildRecipeCard(
+    Map<String, dynamic> recipe, {
+    VoidCallback? onTap,
+    VoidCallback? onDelete,
+  }) {
+    final bgPurple = Color(0xFF8F80F9);
+    final bgMint = Color(0xFF5ED593);
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 8),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // 🟩 카드 본체
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    bgPurple.withOpacity(0.11),
+                    bgMint.withOpacity(0.11),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 이미지
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        recipe['imageUrl'] ?? '',
+                        width: 85,
+                        height: 85,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (context, error, stackTrace) => Container(
+                              width: 85,
+                              height: 85,
+                              color: Colors.grey[300],
+                            ),
+                      ),
+                    ),
+                    SizedBox(width: 14),
+                    // 텍스트 정보
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            recipe['name'] ?? '이름 없음',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Colors.black,
+                              fontFamily: 'Pretendard',
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          if (recipe['keywords'] != null)
+                            Text(
+                              (recipe['keywords'] as List)
+                                  .map((e) => '#$e')
+                                  .join('  '),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Pretendard',
+                              ),
+                            ),
+                          if (recipe['desc'] != null) ...[
+                            SizedBox(height: 4),
+                            Text(
+                              recipe['desc'],
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.black.withOpacity(0.7),
+                                fontFamily: 'Pretendard',
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.timer,
+                                size: 14,
+                                color: Colors.black54,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                '${recipe['time'] ?? '?'}분',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                '🔥 난이도 ${recipe['level'] ?? '?'}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                '👤 ${recipe['serving'] ?? '?'}인분',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // 🗑 삭제 아이콘
+            if (onDelete != null)
+              Positioned(
+                top: 4,
+                right: 6,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: onDelete,
+                    child: Container(
+                      padding: EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black26, blurRadius: 4),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.delete_rounded,
+                        color: Colors.redAccent,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
