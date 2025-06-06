@@ -5,8 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:shim/DB/db_recipe.dart';
 import 'package:shim/DB/db_record.dart';
+import 'package:shim/DB/recipe/db_recipe.dart';
 import 'package:shim/DB/signup/DB_nickname.dart';
 import 'package:shim/main_page/breakfast_log.dart';
 import 'package:shim/main_page/dinner_log.dart';
