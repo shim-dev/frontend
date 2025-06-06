@@ -4,17 +4,17 @@ import 'package:http/http.dart' as http;
 import 'package:shim/DB/db_helper.dart';
 
 // 북마크 추가
-Future<void> bookmarkRecipe(String recipeId) async {
-  final userId = await getUserId();
-  final response = await http.post(
-    Uri.parse('$apiBase/bookmark_recipe'),
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({'user_id': userId, 'recipe_id': recipeId}),
-  );
-  if (response.statusCode != 200) {
-    throw Exception('북마크 저장 실패: ${response.body}');
-  }
-}
+// Future<void> bookmarkRecipe(String recipeId) async {
+//   final userId = await getUserId();
+//   final response = await http.post(
+//     Uri.parse('$apiBase/bookmark_recipe'),
+//     headers: {'Content-Type': 'application/json'},
+//     body: jsonEncode({'user_id': userId, 'recipe_id': recipeId}),
+//   );
+//   if (response.statusCode != 200) {
+//     throw Exception('북마크 저장 실패: ${response.body}');
+//   }
+// }
 
 // 레시피 id로 레시피 상세정보 받아오기
 Future<Map<String, dynamic>?> getRecipeById(String recipeId) async {

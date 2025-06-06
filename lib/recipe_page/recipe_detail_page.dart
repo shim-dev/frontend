@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shim/DB/db_bookmark.dart';
+import 'package:shim/DB/recipe/db_recipe.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class RecipeDetailPage extends StatefulWidget {
