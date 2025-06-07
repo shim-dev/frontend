@@ -32,3 +32,20 @@ Future<bool> fetchUserNotificationSetting() async {
   }
   return false;
 }
+
+Future<bool> updateNickname(String nickname) async {
+  final userId = await getUserId();
+  final url = Uri.parse('http://127.0.0.1:5000/api/mypage/nickname');
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'user_id': userId, 'nickname': nickname}),
+    );
+    return response.statusCode == 200;
+  } catch (e) {
+    print("❌ 닉네임 변경 실패: $e");
+    return false;
+  }
+}

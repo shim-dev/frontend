@@ -16,17 +16,32 @@ const Color mainMint = Color(0xFF69B294);
 const Color lightMint = Color(0xFF9CE5C7);
 const Color darkMint = Color(0xFF367F61);
 
-class MyTab extends StatelessWidget {
+class MyTab extends StatefulWidget {
   const MyTab({super.key});
 
+  @override
+  State<MyTab> createState() => _MyTabState();
+}
+
+class _MyTabState extends State<MyTab> {
+  Key profileKey = UniqueKey(); 
+  void refreshProfile() {
+    setState(() {
+      profileKey = UniqueKey(); 
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const MypageAppBar(title: '마이페이지'),
       backgroundColor: Colors.white,
       body: ListView(
-        children: const [MyProfile(), MyShortcutRow(), Settings()],
-      ),
+      children: [
+        MyProfile(key: profileKey), // 키로 상태 관리
+        const MyShortcutRow(),
+        const Settings(),
+      ],
+    ),
     );
   }
 }
@@ -154,20 +169,25 @@ class _MyProfileState extends State<MyProfile> {
             child: Padding(
               padding: const EdgeInsets.only(top: 80.0), 
               child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => FixMyProfile()),
-                  );
-                },
-                child: const Text(
-                  '계정관리',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FixMyProfile()),
+                );
+                if (result == true) {
+                  final parentState = context.findAncestorStateOfType<_MyTabState>();
+                  parentState?.refreshProfile(); 
+                }
+              },
+              child: const Text(
+                '계정관리',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
                 ),
               ),
+            ),
+
             ),
           ),
         ],
@@ -286,17 +306,6 @@ class _SettingsState extends State<Settings> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SettingItem(
-          iconPath: 'assets/icon/bell.svg',
-          label: '알림',
-          hasSwitch: true,
-          switchValue: _isNotificationOn,
-          onChanged: (value) {
-            setState(() {
-              _isNotificationOn = value;
-            });
-          },
-        ),
         SettingItem(
           iconPath: 'assets/icon/information.svg',
           label: '자주 묻는 질문',
