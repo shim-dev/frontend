@@ -49,3 +49,30 @@ Future<bool> updateNickname(String nickname) async {
     return false;
   }
 }
+
+Future<bool> changePassword(String currentPassword, String newPassword) async {
+  final userId = await getUserId(); // 로그인된 사용자 ID 불러오기
+  final url = Uri.parse('http://127.0.0.1:5000/api/mypage/change_password');
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'user_id': userId,
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      final error = json.decode(response.body)['error'];
+      throw Exception(error); // 👈 Flutter 화면에서 catch 가능
+    }
+  } catch (e) {
+    print("❌ 비밀번호 변경 오류: $e");
+    throw Exception('비밀번호 변경 중 오류가 발생했습니다.');
+  }
+}
