@@ -46,17 +46,16 @@ class MypageAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      leading:
-          onBack == null
-              ? null
-              : IconButton(
-                icon: SvgPicture.asset(
-                  'assets/icon/arrow_back.svg',
-                  width: 32,
-                  height: 32,
-                ),
-                onPressed: onBack ?? () => Navigator.pop(context),
+      leading: onBack == null
+          ? null
+          : IconButton(
+              icon: SvgPicture.asset(
+                'assets/icon/arrow_back.svg',
+                width: 32,
+                height: 32,
               ),
+              onPressed: onBack ?? () => Navigator.pop(context),
+            ),
       title: Text(
         title,
         style: const TextStyle(
@@ -86,7 +85,7 @@ class MyProfile extends StatefulWidget {
 
 class _MyProfileState extends State<MyProfile> {
   String nickname = '...';
-  String profileImageUrl = '';
+  String email = '';
 
   @override
   void initState() {
@@ -95,61 +94,84 @@ class _MyProfileState extends State<MyProfile> {
   }
 
   void loadUserInfo() async {
-    final data = await fetchUserInfo(); // userId도 따로 안 넣어도 됨!
+    final data = await fetchUserInfo();
     if (data != null) {
       setState(() {
         nickname = data['nickname'] ?? '사용자';
-        profileImageUrl = data['profileImageUrl'] ?? '';
+        email = data['email'] ?? '1234@naver.com';
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-    return Column(
-      children: [
-        SizedBox(height: screenHeight * 0.03),
-        CircleAvatar(
-          radius: screenWidth * 0.15,
-          backgroundImage:
-              profileImageUrl.isNotEmpty
-                  ? NetworkImage(profileImageUrl)
-                  : const AssetImage('assets/profile_sample/mococo.png')
-                      as ImageProvider<Object>,
-          backgroundColor: mainMint,
-        ),
-        SizedBox(height: screenHeight * 0.022),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => FixMyProfile()),
-            );
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth * 0.06,
+        vertical: screenHeight * 0.02,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 왼쪽 닉네임 + 이메일
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                nickname,
+              const Text(
+                '안녕하세요',
                 style: TextStyle(
-                  fontSize: screenWidth * 0.075,
+                  fontSize: 25,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              Text(
+                '$nickname님',
+                style: const TextStyle(
+                  fontSize: 25,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
-              SizedBox(width: screenWidth * 0.03),
-              SvgPicture.asset(
-                'assets/icon/right_arrow.svg',
-                width: 11,
-                height: 18,
+              const SizedBox(height: 8),
+              Text(
+                email,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
               ),
             ],
           ),
-        ),
-      ],
+
+          // 오른쪽 계정관리
+          Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 80.0), 
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => FixMyProfile()),
+                  );
+                },
+                child: const Text(
+                  '계정관리',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -169,29 +191,26 @@ class MyShortcutRow extends StatelessWidget {
           _ShortcutItem(
             iconPath: 'assets/icon/bookmark.svg',
             label: '북마크',
-            onTap:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const BookmarkPage()),
-                ),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BookmarkPage()),
+            ),
           ),
           _ShortcutItem(
             iconPath: 'assets/icon/event.svg',
             label: '이벤트',
-            onTap:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const EventPage()),
-                ),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EventPage()),
+            ),
           ),
           _ShortcutItem(
             iconPath: 'assets/icon/notice.svg',
             label: '공지사항',
-            onTap:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NoticePage()),
-                ),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NoticePage()),
+            ),
           ),
         ],
       ),
@@ -249,7 +268,6 @@ class Settings extends StatefulWidget {
 
 class _SettingsState extends State<Settings> {
   bool _isNotificationOn = false;
-  //final String userId = '68391556c9c9e1968806a36b';
 
   @override
   void initState() {
@@ -282,29 +300,26 @@ class _SettingsState extends State<Settings> {
         SettingItem(
           iconPath: 'assets/icon/information.svg',
           label: '자주 묻는 질문',
-          onTap:
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const FaqPage()),
-              ),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const FaqPage()),
+          ),
         ),
         SettingItem(
           iconPath: 'assets/icon/paper.svg',
           label: '약관 확인',
-          onTap:
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const TermsPage()),
-              ),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const TermsPage()),
+          ),
         ),
         SettingItem(
           iconPath: 'assets/icon/chat.svg',
           label: '1대1 문의하기',
-          onTap:
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const InquiryPage()),
-              ),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const InquiryPage()),
+          ),
         ),
         SettingItem(
           iconPath: 'assets/icon/logout.svg',
