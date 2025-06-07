@@ -8,7 +8,7 @@ Future<Map<String, dynamic>> setHeightWeight(
   int weight,
 ) async {
   final response = await http.post(
-    Uri.parse('http://175.192.77.229:5000/set_height_weight'),
+    Uri.parse('http://127.0.0.1:5000/set_height_weight'),
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({'user_id': userId, 'height': height, 'weight': weight}),
   );

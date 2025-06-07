@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 Future<Map<String, dynamic>?> fetchEventDetailFromDB(String eventId) async {
-  final url = Uri.parse('http://175.192.77.229:5000/api/mypage/event/$eventId');
+  final url = Uri.parse('http://127.0.0.1:5000/api/mypage/event/$eventId');
 
   try {
     final response = await http.get(url);

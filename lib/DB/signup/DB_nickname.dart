@@ -9,7 +9,7 @@ Future<Map<String, dynamic>> setNickname(
   String? profileImageUrl,
 ) async {
   final response = await http.post(
-    Uri.parse('http://175.192.77.229:5000/set_nickname'),
+    Uri.parse('http://127.0.0.1:5000/set_nickname'),
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({
       'user_id': userId,

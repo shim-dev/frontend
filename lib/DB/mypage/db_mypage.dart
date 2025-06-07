@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shim/DB/db_helper.dart'; // getUserId 위치에 맞게 경로 설정
 
-const String apiBase = 'http://175.192.77.229:5000/api/mypage';
+const String apiBase = 'http://127.0.0.1:5000/api/mypage';
 
 Future<Map<String, dynamic>?> fetchUserInfo() async {
   final userId = await getUserId(); // 외부에서 전달받지 않고 내부에서 획득
