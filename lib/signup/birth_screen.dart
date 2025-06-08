@@ -128,31 +128,38 @@ class _BirthScreenState extends State<BirthScreen> {
 
             // 드롭다운 3개 (연, 월, 일)
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _GradientDropdown(
-                  focusNode: _yearFocus,
-                  hint: 'YYYY',
-                  width: deviceWidth * 0.24,
-                  value: selectedYear,
-                  items: years,
-                  onChanged: (val) => setState(() => selectedYear = val),
+                Expanded(
+                  flex: 4,
+                  child: _GradientDropdown(
+                    focusNode: _yearFocus,
+                    hint: 'YYYY',
+                    value: selectedYear,
+                    items: years,
+                    onChanged: (val) => setState(() => selectedYear = val),
+                  ),
                 ),
-                _GradientDropdown(
-                  focusNode: _monthFocus,
-                  hint: 'MM',
-                  width: deviceWidth * 0.17,
-                  value: selectedMonth,
-                  items: months,
-                  onChanged: (val) => setState(() => selectedMonth = val),
+                SizedBox(width: 8), // 간격 조절
+                Expanded(
+                  flex: 3,
+                  child: _GradientDropdown(
+                    focusNode: _monthFocus,
+                    hint: 'MM',
+                    value: selectedMonth,
+                    items: months,
+                    onChanged: (val) => setState(() => selectedMonth = val),
+                  ),
                 ),
-                _GradientDropdown(
-                  focusNode: _dayFocus,
-                  hint: 'DD',
-                  width: deviceWidth * 0.17,
-                  value: selectedDay,
-                  items: days,
-                  onChanged: (val) => setState(() => selectedDay = val),
+                SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: _GradientDropdown(
+                    focusNode: _dayFocus,
+                    hint: 'DD',
+                    value: selectedDay,
+                    items: days,
+                    onChanged: (val) => setState(() => selectedDay = val),
+                  ),
                 ),
               ],
             ),
@@ -256,7 +263,6 @@ class _BirthScreenState extends State<BirthScreen> {
 class _GradientDropdown extends StatefulWidget {
   final FocusNode focusNode;
   final String hint;
-  final double width;
   final String? value;
   final List<String> items;
   final ValueChanged<String?> onChanged;
@@ -264,7 +270,6 @@ class _GradientDropdown extends StatefulWidget {
   const _GradientDropdown({
     required this.focusNode,
     required this.hint,
-    required this.width,
     required this.value,
     required this.items,
     required this.onChanged,
@@ -282,7 +287,6 @@ class _GradientDropdownState extends State<_GradientDropdown> {
     return Focus(
       focusNode: widget.focusNode,
       child: SizedBox(
-        width: widget.width,
         height: deviceWidth * 0.14, // 높이도 비율로 (약 48~55px)
         child: Stack(
           children: [
