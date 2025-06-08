@@ -20,7 +20,7 @@ Future<Map<String, dynamic>?> fetchEventDetailFromDB(String eventId) async {
 }
 
 Future<List<dynamic>?> fetchEventsFromDB() async {
-  final url = Uri.parse('http://175.192.77.229:5000/api/mypage/event');
+  final url = Uri.parse('http://127.0.0.1:5000/api/mypage/event');
 
   try {
     final response = await http.get(url);
