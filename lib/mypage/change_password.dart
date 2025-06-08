@@ -93,7 +93,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 24),
-            const Text('현재 비밀번호', style: TextStyle(fontSize: 18)),
+            const Text('현재 비밀번호', style: TextStyle(fontSize: 18, color: Colors.black)),
             const SizedBox(height: 8),
             TextField(
               controller: currentController,
@@ -114,7 +114,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               ),
             const SizedBox(height: 24),
 
-            const Text('신규 비밀번호', style: TextStyle(fontSize: 18)),
+            const Text('신규 비밀번호', style: TextStyle(fontSize: 18,color: Colors.black)),
             const SizedBox(height: 8),
             TextField(
               controller: newController,
@@ -131,7 +131,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             _checkRow('영문 대문자, 소문자, 숫자 혼합', isCharMixValid),
 
             const SizedBox(height: 24),
-            const Text('비밀번호 확인', style: TextStyle(fontSize: 18)),
+            const Text('비밀번호 확인', style: TextStyle(fontSize: 18,color: Colors.black)),
             const SizedBox(height: 8),
             TextField(
               controller: confirmController,

@@ -76,3 +76,19 @@ Future<bool> changePassword(String currentPassword, String newPassword) async {
     throw Exception('비밀번호 변경 중 오류가 발생했습니다.');
   }
 }
+
+Future<Map<String, dynamic>?> getHeightWeight(String userId) async {
+  final url = Uri.parse('http://127.0.0.1:5000/api/mypage/health_profile?user_id=$userId');
+
+  try {
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    } else {
+      print('❌ 신체 정보 불러오기 실패: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('❌ 네트워크 오류: $e');
+  }
+  return null;
+}

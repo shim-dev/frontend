@@ -5,6 +5,8 @@ import 'package:shim/mypage/appbar.dart';
 import 'fix_nickname.dart';
 import 'change_password.dart';
 import 'withdrawal_screen.dart';
+import 'package:shim/signup/height_weight_screen.dart';
+import 'package:shim/DB/db_helper.dart';
 
 class FixMyProfile extends StatefulWidget {
   const FixMyProfile({super.key});
@@ -71,7 +73,18 @@ class _FixProfileOptionsState extends State<FixProfileOptions> {
           );
         },
       },
-      {'text': '건강 정보 수정하기', 'onTap': () => print('건강 정보 수정')},
+      {
+        'text': '건강 정보 수정하기',
+        'onTap': () async {
+          final userId = await getUserId(); 
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HeightWeightScreen(userId: userId),
+            ),
+          );
+        },
+      },
       {
         'text': '탈퇴하기',
         'onTap': () {
