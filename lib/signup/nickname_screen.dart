@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../DB/signup/DB_nickname.dart';
 import 'birth_screen.dart';
-//import '../db/firebase/firebase_storage.dart';
+import '../DB/firebase/firebase_storage.dart';
 
 // <- 커스텀 화살표 아이콘
 class LeftArrowIcon extends StatelessWidget {
@@ -282,7 +282,7 @@ class _NicknameScreenState extends State<NicknameScreen> {
                     String? imageUrl;
                     if (_profileImage != null) {
                       print("이미지 업로드 시작");
-                      //imageUrl = await uploadProfileImageToFirebase(_profileImage!, widget.userId);
+                      imageUrl = await uploadProfileImageToFirebase(_profileImage!, widget.userId);
                       print("업로드된 이미지 URL: $imageUrl");
                     }
 
