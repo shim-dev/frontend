@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shim/DB/mypage/db_bookmark1.dart';
 import 'package:shim/mypage/appbar.dart';
+import 'package:shim/recipe_page/recipe_search_result.dart';
 
 class BookmarkPage extends StatefulWidget {
   const BookmarkPage({super.key});
@@ -228,7 +229,12 @@ Widget buildEmptyBookmarkView(
           height: screenHeight * 0.06, // 버튼 높이 (약 56pt)
           child: ElevatedButton(
             onPressed: () {
-              //Navigator.pushNamed(context, '/recipes'); //💙향후 연결
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RecipeSearchResultPage(query: ''),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4CAF80), // 민트색

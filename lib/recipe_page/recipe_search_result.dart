@@ -30,7 +30,9 @@ class _RecipeSearchResultPageState extends State<RecipeSearchResultPage> {
     super.initState();
     _searchController.text = widget.query;
     currentQuery = widget.query;
-    _onSearch(currentQuery);
+
+    // 🔍 query가 비어 있으면 전체 레시피 검색
+    _onSearch(widget.query.trim().isEmpty ? '' : widget.query);
   }
 
   void _onSearch(String query, {String order = 'latest'}) async {

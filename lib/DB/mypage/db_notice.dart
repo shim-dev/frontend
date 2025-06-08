@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-const String apiBase = 'http://125.128.179.84:5000/api/mypage';
+const String apiBase = 'http://127.0.0.1:5000/api/mypage';
 
 Future<List<dynamic>?> fetchNoticesFromDB() async {
   final url = Uri.parse('$apiBase/notice');

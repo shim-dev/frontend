@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 Future<List<dynamic>?> fetchFaqsFromDB() async {
-  final url = Uri.parse('http://125.128.179.84:5000/api/mypage/faq');
+  final url = Uri.parse('http://127.0.0.1:5000/api/mypage/faq');
 
   try {
     final response = await http.get(url);

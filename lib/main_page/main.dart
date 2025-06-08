@@ -30,9 +30,15 @@ import 'package:shim/mypage/mypage.dart';
 import 'package:shim/recipe_page/recipe_detail_page.dart';
 import 'package:shim/recipe_page/recipe_search_result.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:firebase_core/firebase_core.dart';
+import '../firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  //  Firebase 초기화 추가
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await initializeDateFormatting('ko_KR', null);
   runApp(const AppRoot());
 }

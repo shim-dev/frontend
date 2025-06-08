@@ -50,7 +50,7 @@ class _EventPageState extends State<EventPage> {
                     iconPath: 'assets/icon/celebration.svg',
                     title: event['title'],
                     date: event['date'],
-                    eventId: event['id'], // 👈 중요: id 넘기기
+                    eventId: event['id'], 
                   );
                 },
               ),

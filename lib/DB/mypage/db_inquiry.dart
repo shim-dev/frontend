@@ -1,11 +1,19 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:shim/DB/db_helper.dart';
 
-Future<List<dynamic>?> fetchInquiriesFromDB(String userId) async {
-  final url = Uri.parse(
-    'http://125.128.179.84:5000/api/mypage/inquiries?user_id=$userId',
-  );
+const String apiBase = 'http://127.0.0.1:5000/api/mypage';
+
+// 🔹 1:1 문의 내역 불러오기
+Future<List<dynamic>?> fetchInquiriesFromDB() async {
+  final userId = await getUserId();
+  if (userId == null) {
+    print('❌ 사용자 ID 없음');
+    return null;
+  }
+
+  final url = Uri.parse('$apiBase/inquiries?user_id=$userId');
 
   try {
     final response = await http.get(url);
@@ -18,5 +26,33 @@ Future<List<dynamic>?> fetchInquiriesFromDB(String userId) async {
   } catch (e) {
     print('❌ 네트워크 오류: $e');
     return null;
+  }
+}
+
+//  1:1 문의 등록
+Future<bool> postInquiryToDB(String title, String content) async {
+  final userId = await getUserId(); // ✅ 동적으로 불러오기
+  if (userId == null) {
+    print('❌ 사용자 ID 없음');
+    return false;
+  }
+
+  final url = Uri.parse('$apiBase/inquiries');
+  final body = jsonEncode({
+    'user_id': userId,
+    'title': title,
+    'content': content,
+  });
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
+    return response.statusCode == 200;
+  } catch (e) {
+    print('❌ 문의 등록 실패: $e');
+    return false;
   }
 }
