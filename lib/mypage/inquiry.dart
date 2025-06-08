@@ -17,17 +17,24 @@ class _InquiryPageState extends State<InquiryPage> {
   @override
   void initState() {
     super.initState();
-    _fetchInquiries(); // ✅ 수정된 부분
+    _fetchInquiries(); 
   }
 
   Future<void> _fetchInquiries() async {
-    final data = await fetchInquiriesFromDB(); // 내부에서 getUserId도 불러옴
+    final data = await fetchInquiriesFromDB(); 
     if (data != null) {
       setState(() {
         inquiries = data;
       });
     }
   }
+
+  void _handleInquirySubmitted() {
+  setState(() {
+    _selectedTabIndex = 1; // 문의 내역 탭으로 전환
+  });
+  _fetchInquiries(); // 최신 문의 내역 다시 불러오기
+}
 
   @override
   Widget build(BuildContext context) {
@@ -71,11 +78,10 @@ class _InquiryPageState extends State<InquiryPage> {
           ),
           const Divider(height: 1),
           Expanded(
-            child:
-                _selectedTabIndex == 0
-                    ? const InquiryForm()
-                    : InquiryHistory(inquiries: inquiries),
-          ),
+          child: _selectedTabIndex == 0
+              ? InquiryForm(onSubmitted: _handleInquirySubmitted)
+              : InquiryHistory(inquiries: inquiries),
+        ),
         ],
       ),
     );
@@ -83,7 +89,8 @@ class _InquiryPageState extends State<InquiryPage> {
 }
 
 class InquiryForm extends StatefulWidget {
-  const InquiryForm({super.key});
+  final VoidCallback onSubmitted;
+  const InquiryForm({super.key, required this.onSubmitted});
 
   @override
   State<InquiryForm> createState() => _InquiryFormState();
@@ -112,7 +119,7 @@ class _InquiryFormState extends State<InquiryForm> {
       return;
     }
 
-    final result = await postInquiryToDB(title, content); // ✅ userId는 내부에서 처리
+    final result = await postInquiryToDB(title, content);
     if (result) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("문의가 등록되었습니다")),
@@ -120,10 +127,8 @@ class _InquiryFormState extends State<InquiryForm> {
       titleController.clear();
       contentController.clear();
       setState(() => isChecked = false);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("문의 등록 실패")),
-      );
+
+      widget.onSubmitted();  // nquiryPage에 알림 → 탭 이동 + 목록 갱신
     }
   }
 
@@ -235,7 +240,7 @@ class InquiryHistory extends StatelessWidget {
     }
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     if (inquiries.isEmpty) {
       return const Center(child: Text('문의 내역이 없습니다.'));
@@ -243,16 +248,62 @@ class InquiryHistory extends StatelessWidget {
 
     return ListView.separated(
       itemCount: inquiries.length,
-      separatorBuilder: (_, __) => const Divider(),
+      separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final item = inquiries[index];
         final title = item['title'] ?? '';
-        final status = item['status'] ?? '접수 중';
+        final content = item['content'] ?? '';
         final createdAt = formatDate(item['created_at']);
+        final isAnswered = item['status'] == '답변 완료';
+        final answer = item['answer'] ?? '';
+        final answeredAt = item['answered_at'];
 
-        return ListTile(
-          title: Text(title),
-          subtitle: Text('상태: $status\n작성일: $createdAt'),
+        return ExpansionTile(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 15, color: Colors.black),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    createdAt,
+                    style: const TextStyle(fontSize: 13, color: Colors.black),
+                  ),
+                  Text(
+                    isAnswered ? '답변완료' : '답변대기',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: isAnswered ? const Color(0xFF37966F) : Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          children: [
+            const Divider(),
+            const Text('문의 내용', style: TextStyle(fontWeight: FontWeight.bold,color: Colors.black)),
+            const SizedBox(height: 4),
+            Text(content, style: const TextStyle(color: Colors.black)),
+            if (isAnswered && answer.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text('답변 내용', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(answer, style: const TextStyle(color: Colors.black)),
+              if (answeredAt != null && answeredAt != '')
+                Text(
+                  '답변일: $answeredAt',
+                  style: const TextStyle(fontSize: 12),
+                ),
+            ],
+          ],
         );
       },
     );
