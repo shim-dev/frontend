@@ -114,7 +114,8 @@ class _MyProfileState extends State<MyProfile> {
       setState(() {
         nickname = data['nickname'] ?? '사용자';
         email = data['email'] ?? '1234@naver.com';
-        profileImageUrl = data['profile_url'];
+        profileImageUrl = data['profileImageUrl'];
+        print('✅ [DEBUG] profileImageUrl loaded: $profileImageUrl');
       });
     }
   }
