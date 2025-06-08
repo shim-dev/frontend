@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shim/mypage/appbar.dart';
+import 'package:shim/DB/mypage/db_mypage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shim/signup/welcome_screen.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -11,13 +14,24 @@ class WithdrawalScreen extends StatefulWidget {
 class _WithdrawalScreenState extends State<WithdrawalScreen> {
   bool _agreed = false;
   final TextEditingController _reasonController = TextEditingController();
+  String userNickname = '회원';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchNickname().then((nickname) {
+      setState(() {
+        userNickname = nickname;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: const CustomAppBar(title: '비밀번호 변경'),
+      appBar: const CustomAppBar(title: '탈퇴하기'),
       backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
@@ -25,9 +39,9 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: screenHeight * 0.03),
-            const Text(
-              '혜진님,\n정말 탈퇴하시겠어요?',
-              style: TextStyle(
+            Text(
+              '$userNickname님,\n정말 탈퇴하시겠어요?',
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
@@ -113,8 +127,26 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                     child: SizedBox(
                       height: 50,
                       child: OutlinedButton(
-                        onPressed: () {
-                          // 탈퇴 처리 로직
+                        onPressed: () async {
+                          final reason = _reasonController.text.trim();
+                          final success = await withdrawUser(reason);
+
+                          if (!mounted) return;
+
+                          if (success) {
+                            const storage = FlutterSecureStorage();
+                            await storage.deleteAll();
+
+                            // ✅ 로그인 화면으로 강제 이동
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                              (route) => false,
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('탈퇴에 실패했습니다. 다시 시도해주세요.')),
+                            );
+                          }
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(
@@ -138,14 +170,13 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                   ),
                 ],
               ),
-            SizedBox(height: screenHeight * 0.03), // 버튼 아래 여백
+            SizedBox(height: screenHeight * 0.03),
           ],
         ),
       ),
     );
-  } // <-- build 함수 닫는 중괄호
+  }
 
-  // ✅ 여기는 build 바깥에 있어야 함
   Widget _warning(String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,20 +192,4 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       ],
     );
   }
-}
-
-Widget _warning(String text) {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Icon(Icons.error_outline, color: Colors.black),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 15, color: Colors.black),
-        ),
-      ),
-    ],
-  );
 }

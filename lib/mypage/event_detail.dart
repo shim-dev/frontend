@@ -88,30 +88,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           ),
                         },
                       ),
-
-                      SizedBox(height: screenHeight * 0.03),
-
-                      /// 참여 버튼
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // 참여하기 동작 정의
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF37966F),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            '참여하기',
-                            style: TextStyle(fontSize: 18, color: Colors.white),
-                          ),
-                        ),
-                      ),
-
                       SizedBox(height: screenHeight * 0.03),
                     ],
                   ),
