@@ -10,7 +10,6 @@ import 'logout.dart';
 import 'notice.dart';
 import 'terms.dart';
 
-// 공식 민트 색상
 const Color mainMint = Color(0xFF69B294);
 const Color lightMint = Color(0xFF9CE5C7);
 const Color darkMint = Color(0xFF367F61);
@@ -23,24 +22,25 @@ class MyTab extends StatefulWidget {
 }
 
 class _MyTabState extends State<MyTab> {
-  Key profileKey = UniqueKey(); 
+  Key profileKey = UniqueKey();
   void refreshProfile() {
     setState(() {
-      profileKey = UniqueKey(); 
+      profileKey = UniqueKey();
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const MypageAppBar(title: '마이페이지'),
       backgroundColor: Colors.white,
       body: ListView(
-      children: [
-        MyProfile(key: profileKey), // 키로 상태 관리
-        const MyShortcutRow(),
-        const Settings(),
-      ],
-    ),
+        children: [
+          MyProfile(key: profileKey),
+          const MyShortcutRow(),
+          const Settings(),
+        ],
+      ),
     );
   }
 }
@@ -100,6 +100,7 @@ class MyProfile extends StatefulWidget {
 class _MyProfileState extends State<MyProfile> {
   String nickname = '...';
   String email = '';
+  String? profileImageUrl;
 
   @override
   void initState() {
@@ -113,6 +114,7 @@ class _MyProfileState extends State<MyProfile> {
       setState(() {
         nickname = data['nickname'] ?? '사용자';
         email = data['email'] ?? '1234@naver.com';
+        profileImageUrl = data['profile_url'];
       });
     }
   }
@@ -128,46 +130,50 @@ class _MyProfileState extends State<MyProfile> {
         vertical: screenHeight * 0.02,
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 왼쪽 닉네임 + 이메일
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '안녕하세요',
-                style: TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              Text(
-                '$nickname님',
-                style: const TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                email,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
+          CircleAvatar(
+            radius: 42,
+            backgroundColor: Colors.grey[300],
+            backgroundImage: profileImageUrl != null && profileImageUrl!.isNotEmpty
+                ? NetworkImage(profileImageUrl!)
+                : const AssetImage('assets/profile/default_profile.png') as ImageProvider,
           ),
-
-          // 오른쪽 계정관리
-          Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 80.0), 
-              child: GestureDetector(
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '안녕하세요',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  '$nickname님',
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  email,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 80.0),
+            child: GestureDetector(
               onTap: () async {
                 final result = await Navigator.push(
                   context,
@@ -175,7 +181,7 @@ class _MyProfileState extends State<MyProfile> {
                 );
                 if (result == true) {
                   final parentState = context.findAncestorStateOfType<_MyTabState>();
-                  parentState?.refreshProfile(); 
+                  parentState?.refreshProfile();
                 }
               },
               child: const Text(
@@ -185,8 +191,6 @@ class _MyProfileState extends State<MyProfile> {
                   color: Colors.grey,
                 ),
               ),
-            ),
-
             ),
           ),
         ],

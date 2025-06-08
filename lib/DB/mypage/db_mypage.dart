@@ -6,13 +6,19 @@ import 'package:shim/DB/db_helper.dart'; // getUserId 위치에 맞게 경로 �
 const String apiBase = 'http://127.0.0.1:5000/api/mypage';
 
 Future<Map<String, dynamic>?> fetchUserInfo() async {
-  final userId = await getUserId(); // 외부에서 전달받지 않고 내부에서 획득
+  final userId = await getUserId();
   final url = Uri.parse('$apiBase/user?user_id=$userId');
 
   try {
     final response = await http.get(url);
     if (response.statusCode == 200) {
-      return json.decode(response.body) as Map<String, dynamic>;
+      final data = json.decode(response.body);
+
+      return {
+        'nickname': data['nickname'],
+        'email': data['email'],
+        'profileImageUrl': data['profile_url'], 
+      };
     } else {
       print("❌ 사용자 정보 불러오기 실패: ${response.statusCode}");
     }
