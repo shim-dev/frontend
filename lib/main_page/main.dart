@@ -4,6 +4,7 @@
 //import 'package:capstone_trial_01/signup_test.dart';
 import 'dart:math';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -30,15 +31,13 @@ import 'package:shim/mypage/mypage.dart';
 import 'package:shim/recipe_page/recipe_detail_page.dart';
 import 'package:shim/recipe_page/recipe_search_result.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import '../firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   //  Firebase 초기화 추가
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('ko_KR', null);
   runApp(const AppRoot());
 }
@@ -914,15 +913,6 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                       ),
                     ],
-                  ),
-                  CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.32),
-                    radius: 22,
-                    child: Image.asset(
-                      'assets/icon/heart_front_color.png',
-                      width: 28,
-                      height: 28,
-                    ),
                   ),
                 ],
               ),
