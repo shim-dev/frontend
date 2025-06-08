@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shim/DB/mypage/db_mypage.dart';
-
 import 'bookmark.dart';
 import 'event.dart';
 import 'faq.dart';

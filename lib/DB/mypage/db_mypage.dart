@@ -92,3 +92,34 @@ Future<Map<String, dynamic>?> getHeightWeight(String userId) async {
   }
   return null;
 }
+
+Future<String> fetchNickname() async {
+  final userId = await getUserId();
+  final response = await http.get(
+    Uri.parse('http://127.0.0.1:5000/api/mypage/user?user_id=$userId'),
+  );
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return data['nickname'] ?? '회원';
+  } else {
+    return '회원';
+  }
+}
+
+Future<bool> withdrawUser(String reason) async {
+  final userId = await getUserId(); // SharedPreferences 등에서 가져옴
+  final url = Uri.parse('http://127.0.0.1:5000/api/mypage/withdrawal');
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'user_id': userId, 'reason': reason}),
+    );
+
+    return response.statusCode == 200;
+  } catch (e) {
+    print('❌ 회원 탈퇴 실패: $e');
+    return false;
+  }
+}
