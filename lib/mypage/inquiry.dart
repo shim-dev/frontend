@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shim/DB/mypage/db_inquiry.dart';
 import 'package:shim/mypage/appbar.dart';
+import 'package:shim/DB/db_helper.dart';
 
 class InquiryPage extends StatefulWidget {
   const InquiryPage({super.key});
@@ -16,12 +17,11 @@ class _InquiryPageState extends State<InquiryPage> {
   @override
   void initState() {
     super.initState();
-    fetchInquiries();
+    _fetchInquiries(); // ✅ 수정된 부분
   }
 
-  void fetchInquiries() async {
-    const userId = '683dc52eb059f8754e24303e'; // 나중에 동적으로 바꿔도 됩니다
-    final data = await fetchInquiriesFromDB(userId);
+  Future<void> _fetchInquiries() async {
+    final data = await fetchInquiriesFromDB(); // 내부에서 getUserId도 불러옴
     if (data != null) {
       setState(() {
         inquiries = data;
@@ -91,6 +91,41 @@ class InquiryForm extends StatefulWidget {
 
 class _InquiryFormState extends State<InquiryForm> {
   bool isChecked = false;
+  final titleController = TextEditingController();
+  final contentController = TextEditingController();
+
+  Future<void> submitInquiry() async {
+    if (!isChecked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("개인정보 수집에 동의해주세요")),
+      );
+      return;
+    }
+
+    final title = titleController.text.trim();
+    final content = contentController.text.trim();
+
+    if (title.isEmpty || content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("제목과 내용을 모두 입력해주세요")),
+      );
+      return;
+    }
+
+    final result = await postInquiryToDB(title, content); // ✅ userId는 내부에서 처리
+    if (result) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("문의가 등록되었습니다")),
+      );
+      titleController.clear();
+      contentController.clear();
+      setState(() => isChecked = false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("문의 등록 실패")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,45 +137,24 @@ class _InquiryFormState extends State<InquiryForm> {
             '제목 *',
             style: TextStyle(fontSize: 18, color: Colors.black),
           ),
-          const TextField(decoration: InputDecoration(hintText: '제목을 입력하세요')),
-
+          TextField(
+            controller: titleController,
+            decoration: const InputDecoration(hintText: '제목을 입력하세요'),
+          ),
           const SizedBox(height: 20),
           const Text(
             '문의내용 *',
             style: TextStyle(fontSize: 18, color: Colors.black),
           ),
           const SizedBox(height: 10),
-          const TextField(
+          TextField(
+            controller: contentController,
             maxLines: 6,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: '내용을 입력하세요',
               border: OutlineInputBorder(),
             ),
           ),
-
-          const SizedBox(height: 20),
-          const Text(
-            '첨부파일',
-            style: TextStyle(fontSize: 18, color: Colors.black),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.photo_camera, size: 40, color: Colors.grey[700]),
-              const SizedBox(width: 50),
-              Icon(Icons.photo_camera, size: 40, color: Colors.grey[700]),
-              const SizedBox(width: 50),
-              Icon(Icons.photo_camera, size: 40, color: Colors.grey[700]),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            '최대 10MB 이하, 3개까지 등록 가능',
-            style: TextStyle(fontSize: 15, color: Color(0xFF616161)),
-            textAlign: TextAlign.center,
-          ),
-
           const SizedBox(height: 20),
           Row(
             children: [
@@ -161,14 +175,16 @@ class _InquiryFormState extends State<InquiryForm> {
               ),
             ],
           ),
-
           const SizedBox(height: 30),
-
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    titleController.clear();
+                    contentController.clear();
+                    setState(() => isChecked = false);
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF37966F)),
                     shape: RoundedRectangleBorder(
@@ -184,7 +200,7 @@ class _InquiryFormState extends State<InquiryForm> {
               const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: submitInquiry,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF37966F),
                     shape: RoundedRectangleBorder(
@@ -219,124 +235,24 @@ class InquiryHistory extends StatelessWidget {
     }
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
+    if (inquiries.isEmpty) {
+      return const Center(child: Text('문의 내역이 없습니다.'));
+    }
+
     return ListView.separated(
       itemCount: inquiries.length,
       separatorBuilder: (_, __) => const Divider(),
       itemBuilder: (context, index) {
         final item = inquiries[index];
-
-        final isAnswered = item['status'] == '답변 완료';
-        final answerText = item['answer'] ?? '';
-        final answeredAt = item['answered_at'];
-
-        final contentText = item['content'] ?? '';
+        final title = item['title'] ?? '';
+        final status = item['status'] ?? '접수 중';
         final createdAt = formatDate(item['created_at']);
 
-        return ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          childrenPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  item['title'] ?? '',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                item['status'] ?? '',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isAnswered ? const Color(0xFF37966F) : Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          children: [
-            const SizedBox(height: 6),
-            const Text(
-              '문의 내용',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              contentText,
-              style: const TextStyle(fontSize: 14, color: Colors.black),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '문의 시간: $createdAt',
-              style: const TextStyle(fontSize: 12, color: Colors.black),
-            ),
-
-            // ✅ 이미지 표시 영역
-            if ((item['images'] as List?)?.isNotEmpty ?? false) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 100,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: item['images'].length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, i) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        item['images'][i],
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (_, __, ___) => const Icon(Icons.broken_image),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-
-            // ✅ 답변 영역
-            if (isAnswered && answerText.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const Text(
-                '답변 내용',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                answerText,
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
-              if (answeredAt != null && answeredAt != '')
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    '답변 시간: $answeredAt',
-                    style: const TextStyle(fontSize: 12, color: Colors.black),
-                  ),
-                ),
-            ],
-          ],
+        return ListTile(
+          title: Text(title),
+          subtitle: Text('상태: $status\n작성일: $createdAt'),
         );
       },
     );
