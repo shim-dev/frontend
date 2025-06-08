@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "112555213367",
+    "project_id": "shim-18761",
+    "storage_bucket": "shim-18761.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:112555213367:android:4cd9a47a07f372b71035b2",
+        "android_client_info": {
+          "package_name": "com.example.capstone_trial_01"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzvYZtIwlsvhvKUumiVYgfYf4B5wqQc4o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:112555213367:android:e8bc3de69681c69d1035b2",
+        "android_client_info": {
+          "package_name": "com.example.shim"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzvYZtIwlsvhvKUumiVYgfYf4B5wqQc4o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
