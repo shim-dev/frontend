@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 Future<Map<String, dynamic>> setAlcohol(String userId, int alcoholCup) async {
   final response = await http.post(
-    Uri.parse('http://175.192.77.229:5000/set_alcohol'),
+    Uri.parse('http://10.0.2.2:5000/set_alcohol'),
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({'user_id': userId, 'alcohol_cup': alcoholCup}),
   );

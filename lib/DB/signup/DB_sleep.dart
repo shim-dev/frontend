@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 Future<Map<String, dynamic>> setSleepTime(String userId, int sleepHour) async {
   final response = await http.post(
-    Uri.parse('http://175.192.77.229:5000/set_sleep'),
+    Uri.parse('http://10.0.2.2:5000/set_sleep'),
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({'user_id': userId, 'sleep_hour': sleepHour}),
   );
