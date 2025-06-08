@@ -77,28 +77,6 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 SizedBox(height: deviceHeight * 0.04),
 
-                const Text(
-                  'SNS계정으로 로그인하기',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                SizedBox(height: deviceHeight * 0.022),
-
-                // SNS 버튼들 (네이버, 카카오, 페북, 애플)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _snsCircleIcon('assets/icon/login_naver.png'),
-                    _snsCircleIcon('assets/icon/login_kakao.png'),
-                    _snsCircleIcon('assets/icon/login_facebook.png'),
-                    _snsCircleIcon('assets/icon/login_apple.png'),
-                  ],
-                ),
-                SizedBox(height: deviceHeight * 0.04),
-
                 // 간편가입 버튼
                 GradientOutlinedButton(
                   onPressed: () {
@@ -175,21 +153,6 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // SNS 아이콘 원형 컨테이너
-  static Widget _snsCircleIcon(String assetPath) {
-    return Container(
-      width: 55,
-      height: 55,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-      ),
-      child: ClipOval(
-        child: Image.asset(assetPath, fit: BoxFit.contain),
       ),
     );
   }
