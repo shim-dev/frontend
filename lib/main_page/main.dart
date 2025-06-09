@@ -2,11 +2,15 @@
 //import 'package:capstone_trial_01/profile_edit.dart';
 //import 'package:shim/main_page/recipe_search_result.dart';
 //import 'package:capstone_trial_01/signup_test.dart';
+import 'dart:math';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:shim/DB/db_recipe.dart';
 import 'package:shim/DB/db_record.dart';
+import 'package:shim/DB/recipe/db_recent_seen_recipe.dart';
+import 'package:shim/DB/recipe/db_recipe.dart';
 import 'package:shim/DB/signup/DB_nickname.dart';
 import 'package:shim/main_page/breakfast_log.dart';
 import 'package:shim/main_page/dinner_log.dart';
@@ -24,17 +28,16 @@ import 'package:shim/main_page/snack_log.dart';
 import 'package:shim/main_page/splash_screen.dart'; // 나중에 수정
 import 'package:shim/main_page/water_log.dart';
 import 'package:shim/mypage/mypage.dart';
+import 'package:shim/recipe_page/recipe_detail_page.dart';
 import 'package:shim/recipe_page/recipe_search_result.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import '../firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   //  Firebase 초기화 추가
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('ko_KR', null);
   runApp(const AppRoot());
 }
@@ -115,6 +118,25 @@ class _ExampleScreenState extends State<ExampleScreen> {
     });
   }
 
+  // 전체 수분 점수
+  List<Map<String, dynamic>> _allWaterRecords = [];
+  Future<void> fetchAllWaterRecords() async {
+    final records = await getAllWaterRecords();
+    print('💧 수분 records: $records');
+    setState(() {
+      _allWaterRecords = records;
+    });
+  }
+
+  // 전체 수면 점수
+  List<Map<String, dynamic>> _allSleepRecords = [];
+  Future<void> fetchAllSleepRecords() async {
+    final records = await getAllSleepRecords();
+    print('🌙 수면 records: $records');
+    setState(() {
+      _allSleepRecords = records;
+    });
+  }
   /////////// 실험실 실험실 실험실 ///////////
 
   Future<void> fetchCalendarFoods(DateTime day) async {
@@ -127,16 +149,104 @@ class _ExampleScreenState extends State<ExampleScreen> {
       final foods = await getRecordsByDate(mealType, formattedDate);
       newFoods[mealType] = foods;
       int score = 0;
+      int itemCount = 0; // 실험용
+
       for (var food in foods) {
         if (food.containsKey('score')) {
           score += (food['score'] as num).toInt();
+          itemCount++;
         } else {
-          double carbohydrate = (food['carbohydrate_g'] ?? 0).toDouble();
+          double kcal = (food['kcal'] ?? 0).toDouble();
+          double protein = (food['protein_g'] ?? 0).toDouble();
           double fat = (food['fat_g'] ?? 0).toDouble();
-          score += (carbohydrate * 2 + fat * 3).toInt();
+          double satFat = (food['saturated_fat_g'] ?? 0).toDouble();
+          double sugar = (food['sugars_g'] ?? 0).toDouble();
+          double sodium = (food['sodium_mg'] ?? 0).toDouble();
+          double weight = (food['total_g'] ?? 0).toDouble();
+          double carb = (food['carbohydrate_g'] ?? 0).toDouble();
+
+          if (weight == 0) continue;
+
+          double sugarPerG = sugar / weight;
+          double fatPerG = fat / weight;
+          double carbPerG = carb / weight;
+
+          // ✅ 에너지 점수 (절대량 기준)
+          double energyScore =
+              kcal <= 700 ? 30 : (30 - ((kcal - 700) / 200) * 10).clamp(10, 30);
+
+          // ✅ 단백질 점수 (절대량 기준)
+          double ratio = protein / 18;
+          double proteinScore =
+              ratio >= 1 ? 25 : (25 * pow(ratio, 0.5).toDouble()).clamp(10, 25);
+
+          // ✅ 나트륨 점수 (절대량 기준)
+          double sodiumScore;
+          if (sodium <= 600) {
+            sodiumScore = 10;
+          } else if (sodium <= 1000) {
+            sodiumScore = (10 - ((sodium - 600) / 400) * 6).clamp(4, 10);
+          } else {
+            sodiumScore = (4 - ((sodium - 1000) / 400) * 8).clamp(0, 4);
+          }
+
+          // ✅ 당류 점수 (농도 기준 비선형 감점)
+          double sugarCutoff = 17 / 667;
+          double sugarScore = (10 -
+                  pow(sugarPerG - sugarCutoff, 2).toDouble() * 8000)
+              .clamp(0, 10);
+
+          // ✅ 포화지방산 점수 (절대량 기준 + 비선형 감점)
+          double satFatScore;
+          if (satFat <= 5) {
+            satFatScore = 5;
+          } else {
+            double excess = satFat - 5;
+            satFatScore = (5 - pow(excess, 2).toDouble() * 1.2).clamp(0, 5);
+          }
+
+          // ✅ 탄수화물 점수 (당/탄수화물 비율 기반)
+          double carbScore;
+          if (carbPerG == 0) {
+            carbScore = 5;
+          } else {
+            double sugarRatio = sugarPerG / carbPerG;
+            if (sugarRatio <= 0.15) {
+              carbScore = 10;
+            } else if (sugarRatio <= 0.3) {
+              carbScore = 5;
+            } else {
+              carbScore = 0;
+            }
+          }
+
+          // ✅ 지방 보너스 (절대량 기준)
+          double fatBonus;
+          if (fat <= 5) {
+            fatBonus = 10;
+          } else if (fat <= 15) {
+            fatBonus = 5;
+          } else {
+            fatBonus = 0;
+          }
+
+          // ✅ 최종 점수 합산
+          double totalScore =
+              energyScore +
+              proteinScore +
+              sodiumScore +
+              sugarScore +
+              satFatScore +
+              carbScore +
+              fatBonus;
+
+          score += totalScore.clamp(0, 100).round();
+          itemCount++;
         }
       }
-      newScores[mealType] = score;
+
+      // newScores[mealType] = score;
+      newScores[mealType] = itemCount == 0 ? 0 : (score / itemCount).round();
     }
     int waterCups = await getWaterCups(formattedDate);
     newFoods['water'] = [
@@ -183,6 +293,8 @@ class _ExampleScreenState extends State<ExampleScreen> {
     calculateScoresFromDB();
     fetchCalendarFoods(_selectedDay);
     fetchAllRecords();
+    fetchAllWaterRecords();
+    fetchAllSleepRecords();
     _loadNickname();
   }
 
@@ -190,58 +302,392 @@ class _ExampleScreenState extends State<ExampleScreen> {
     // 아침
     List<Map<String, dynamic>> breakfastFoods = await getRecords1('breakfast');
     int bfScore = 0;
+    int bf_itemCount = 0; // 실험용
     for (var food in breakfastFoods) {
       if (food.containsKey('score')) {
         bfScore += (food['score'] as num).toInt();
       } else {
-        double carbohydrate = (food['carbohydrate_g'] ?? 0).toDouble();
+        double kcal = (food['kcal'] ?? 0).toDouble();
+        double protein = (food['protein_g'] ?? 0).toDouble();
         double fat = (food['fat_g'] ?? 0).toDouble();
-        bfScore += (carbohydrate * 2 + fat * 3).toInt();
+        double satFat = (food['saturated_fat_g'] ?? 0).toDouble();
+        double sugar = (food['sugars_g'] ?? 0).toDouble();
+        double sodium = (food['sodium_mg'] ?? 0).toDouble();
+        double weight = (food['total_g'] ?? 0).toDouble();
+        double carb = (food['carbohydrate_g'] ?? 0).toDouble();
+
+        if (weight == 0) continue;
+
+        double sugarPerG = sugar / weight;
+        double fatPerG = fat / weight;
+        double carbPerG = carb / weight;
+
+        // ✅ 에너지 점수 (절대량 기준)
+        double energyScore =
+            kcal <= 700 ? 30 : (30 - ((kcal - 700) / 200) * 10).clamp(10, 30);
+
+        // ✅ 단백질 점수 (절대량 기준)
+        double ratio = protein / 18;
+        double proteinScore =
+            ratio >= 1 ? 25 : (25 * pow(ratio, 0.5).toDouble()).clamp(10, 25);
+
+        // ✅ 나트륨 점수 (절대량 기준)
+        double sodiumScore;
+        if (sodium <= 600) {
+          sodiumScore = 10;
+        } else if (sodium <= 1000) {
+          sodiumScore = (10 - ((sodium - 600) / 400) * 6).clamp(4, 10);
+        } else {
+          sodiumScore = (4 - ((sodium - 1000) / 400) * 8).clamp(0, 4);
+        }
+
+        // ✅ 당류 점수 (농도 기준 비선형 감점)
+        double sugarCutoff = 17 / 667;
+        double sugarScore = (10 -
+                pow(sugarPerG - sugarCutoff, 2).toDouble() * 8000)
+            .clamp(0, 10);
+
+        // ✅ 포화지방산 점수 (절대량 기준 + 비선형 감점)
+        double satFatScore;
+        if (satFat <= 5) {
+          satFatScore = 5;
+        } else {
+          double excess = satFat - 5;
+          satFatScore = (5 - pow(excess, 2).toDouble() * 1.2).clamp(0, 5);
+        }
+
+        // ✅ 탄수화물 점수 (당/탄수화물 비율 기반)
+        double carbScore;
+        if (carbPerG == 0) {
+          carbScore = 5;
+        } else {
+          double sugarRatio = sugarPerG / carbPerG;
+          if (sugarRatio <= 0.15) {
+            carbScore = 10;
+          } else if (sugarRatio <= 0.3) {
+            carbScore = 5;
+          } else {
+            carbScore = 0;
+          }
+        }
+
+        // ✅ 지방 보너스 (농도 기준)
+        double fatBonus;
+        if (fat <= 5) {
+          fatBonus = 10;
+        } else if (fat <= 15) {
+          fatBonus = 5;
+        } else {
+          fatBonus = 0;
+        }
+
+        double totalScore =
+            energyScore +
+            proteinScore +
+            sodiumScore +
+            sugarScore +
+            satFatScore +
+            carbScore +
+            fatBonus;
+
+        bfScore += totalScore.clamp(0, 100).round();
+        bf_itemCount++;
       }
     }
-    breakfastScore.value = bfScore;
 
+    breakfastScore.value =
+        bf_itemCount == 0 ? 0 : (bfScore / bf_itemCount).round();
     // 점심
     List<Map<String, dynamic>> lunchFoods = await getRecords1('lunch');
     int lnScore = 0;
+    int ln_itemCount = 0;
     for (var food in lunchFoods) {
       if (food.containsKey('score')) {
-        lnScore += (food['score'] as num).toInt();
+        bfScore += (food['score'] as num).toInt();
       } else {
-        double carbohydrate = (food['carbohydrate_g'] ?? 0).toDouble();
+        double kcal = (food['kcal'] ?? 0).toDouble();
+        double protein = (food['protein_g'] ?? 0).toDouble();
         double fat = (food['fat_g'] ?? 0).toDouble();
-        lnScore += (carbohydrate * 2 + fat * 3).toInt();
+        double satFat = (food['saturated_fat_g'] ?? 0).toDouble();
+        double sugar = (food['sugars_g'] ?? 0).toDouble();
+        double sodium = (food['sodium_mg'] ?? 0).toDouble();
+        double weight = (food['total_g'] ?? 0).toDouble();
+        double carb = (food['carbohydrate_g'] ?? 0).toDouble();
+
+        if (weight == 0) continue;
+
+        double sugarPerG = sugar / weight;
+        double fatPerG = fat / weight;
+        double carbPerG = carb / weight;
+
+        // ✅ 에너지 점수 (절대량 기준)
+        double energyScore =
+            kcal <= 700 ? 30 : (30 - ((kcal - 700) / 200) * 10).clamp(10, 30);
+
+        // ✅ 단백질 점수 (절대량 기준)
+        double ratio = protein / 18;
+        double proteinScore =
+            ratio >= 1 ? 25 : (25 * pow(ratio, 0.5).toDouble()).clamp(10, 25);
+
+        // ✅ 나트륨 점수 (절대량 기준)
+        double sodiumScore;
+        if (sodium <= 600) {
+          sodiumScore = 10;
+        } else if (sodium <= 1000) {
+          sodiumScore = (10 - ((sodium - 600) / 400) * 6).clamp(4, 10);
+        } else {
+          sodiumScore = (4 - ((sodium - 1000) / 400) * 8).clamp(0, 4);
+        }
+
+        // ✅ 당류 점수 (농도 기준 비선형 감점)
+        double sugarCutoff = 17 / 667;
+        double sugarScore = (10 -
+                pow(sugarPerG - sugarCutoff, 2).toDouble() * 8000)
+            .clamp(0, 10);
+
+        // ✅ 포화지방산 점수 (절대량 기준 + 비선형 감점)
+        double satFatScore;
+        if (satFat <= 5) {
+          satFatScore = 5;
+        } else {
+          double excess = satFat - 5;
+          satFatScore = (5 - pow(excess, 2).toDouble() * 1.2).clamp(0, 5);
+        }
+
+        // ✅ 탄수화물 점수 (당/탄수화물 비율 기반)
+        double carbScore;
+        if (carbPerG == 0) {
+          carbScore = 5;
+        } else {
+          double sugarRatio = sugarPerG / carbPerG;
+          if (sugarRatio <= 0.15) {
+            carbScore = 10;
+          } else if (sugarRatio <= 0.3) {
+            carbScore = 5;
+          } else {
+            carbScore = 0;
+          }
+        }
+
+        // ✅ 지방 보너스 (농도 기준)
+        double fatBonus;
+        if (fat <= 5) {
+          fatBonus = 10;
+        } else if (fat <= 15) {
+          fatBonus = 5;
+        } else {
+          fatBonus = 0;
+        }
+
+        double totalScore =
+            energyScore +
+            proteinScore +
+            sodiumScore +
+            sugarScore +
+            satFatScore +
+            carbScore +
+            fatBonus;
+
+        lnScore += totalScore.clamp(0, 100).round();
+        ln_itemCount++;
       }
     }
-    lunchScore.value = lnScore;
+
+    lunchScore.value = ln_itemCount == 0 ? 0 : (lnScore / ln_itemCount).round();
 
     // 저녁
     List<Map<String, dynamic>> dinnerFoods = await getRecords1('dinner');
     int dnScore = 0;
+    int din_itemCount = 0;
     for (var food in dinnerFoods) {
       if (food.containsKey('score')) {
-        dnScore += (food['score'] as num).toInt();
+        bfScore += (food['score'] as num).toInt();
       } else {
-        double carbohydrate = (food['carbohydrate_g'] ?? 0).toDouble();
+        double kcal = (food['kcal'] ?? 0).toDouble();
+        double protein = (food['protein_g'] ?? 0).toDouble();
         double fat = (food['fat_g'] ?? 0).toDouble();
-        dnScore += (carbohydrate * 2 + fat * 3).toInt();
+        double satFat = (food['saturated_fat_g'] ?? 0).toDouble();
+        double sugar = (food['sugars_g'] ?? 0).toDouble();
+        double sodium = (food['sodium_mg'] ?? 0).toDouble();
+        double weight = (food['total_g'] ?? 0).toDouble();
+        double carb = (food['carbohydrate_g'] ?? 0).toDouble();
+
+        if (weight == 0) continue;
+
+        double sugarPerG = sugar / weight;
+        double fatPerG = fat / weight;
+        double carbPerG = carb / weight;
+
+        // ✅ 에너지 점수 (절대량 기준)
+        double energyScore =
+            kcal <= 700 ? 30 : (30 - ((kcal - 700) / 200) * 10).clamp(10, 30);
+
+        // ✅ 단백질 점수 (절대량 기준)
+        double ratio = protein / 18;
+        double proteinScore =
+            ratio >= 1 ? 25 : (25 * pow(ratio, 0.5).toDouble()).clamp(10, 25);
+
+        // ✅ 나트륨 점수 (절대량 기준)
+        double sodiumScore;
+        if (sodium <= 600) {
+          sodiumScore = 10;
+        } else if (sodium <= 1000) {
+          sodiumScore = (10 - ((sodium - 600) / 400) * 6).clamp(4, 10);
+        } else {
+          sodiumScore = (4 - ((sodium - 1000) / 400) * 8).clamp(0, 4);
+        }
+
+        // ✅ 당류 점수 (농도 기준 비선형 감점)
+        double sugarCutoff = 17 / 667;
+        double sugarScore = (10 -
+                pow(sugarPerG - sugarCutoff, 2).toDouble() * 8000)
+            .clamp(0, 10);
+
+        // ✅ 포화지방산 점수 (절대량 기준 + 비선형 감점)
+        double satFatScore;
+        if (satFat <= 5) {
+          satFatScore = 5;
+        } else {
+          double excess = satFat - 5;
+          satFatScore = (5 - pow(excess, 2).toDouble() * 1.2).clamp(0, 5);
+        }
+
+        // ✅ 탄수화물 점수 (당/탄수화물 비율 기반)
+        double carbScore;
+        if (carbPerG == 0) {
+          carbScore = 5;
+        } else {
+          double sugarRatio = sugarPerG / carbPerG;
+          if (sugarRatio <= 0.15) {
+            carbScore = 10;
+          } else if (sugarRatio <= 0.3) {
+            carbScore = 5;
+          } else {
+            carbScore = 0;
+          }
+        }
+
+        // ✅ 지방 보너스 (농도 기준)
+        double fatBonus;
+        if (fat <= 5) {
+          fatBonus = 10;
+        } else if (fat <= 15) {
+          fatBonus = 5;
+        } else {
+          fatBonus = 0;
+        }
+
+        double totalScore =
+            energyScore +
+            proteinScore +
+            sodiumScore +
+            sugarScore +
+            satFatScore +
+            carbScore +
+            fatBonus;
+
+        dnScore += totalScore.clamp(0, 100).round();
+        din_itemCount++;
       }
     }
-    dinnerScore.value = dnScore;
-
+    dinnerScore.value =
+        din_itemCount == 0 ? 0 : (dnScore / din_itemCount).round();
     // 간식
     List<Map<String, dynamic>> snackFoods = await getRecords1('snack');
     int snScore = 0;
+    int sn_itemCount = 0;
     for (var food in snackFoods) {
       if (food.containsKey('score')) {
-        snScore += (food['score'] as num).toInt();
+        bfScore += (food['score'] as num).toInt();
       } else {
-        double carbohydrate = (food['carbohydrate_g'] ?? 0).toDouble();
+        double kcal = (food['kcal'] ?? 0).toDouble();
+        double protein = (food['protein_g'] ?? 0).toDouble();
         double fat = (food['fat_g'] ?? 0).toDouble();
-        snScore += (carbohydrate * 2 + fat * 3).toInt();
+        double satFat = (food['saturated_fat_g'] ?? 0).toDouble();
+        double sugar = (food['sugars_g'] ?? 0).toDouble();
+        double sodium = (food['sodium_mg'] ?? 0).toDouble();
+        double weight = (food['total_g'] ?? 0).toDouble();
+        double carb = (food['carbohydrate_g'] ?? 0).toDouble();
+
+        if (weight == 0) continue;
+
+        double sugarPerG = sugar / weight;
+        double fatPerG = fat / weight;
+        double carbPerG = carb / weight;
+
+        // ✅ 에너지 점수 (절대량 기준)
+        double energyScore =
+            kcal <= 700 ? 30 : (30 - ((kcal - 700) / 200) * 10).clamp(10, 30);
+
+        // ✅ 단백질 점수 (절대량 기준)
+        double ratio = protein / 18;
+        double proteinScore =
+            ratio >= 1 ? 25 : (25 * pow(ratio, 0.5).toDouble()).clamp(10, 25);
+
+        // ✅ 나트륨 점수 (절대량 기준)
+        double sodiumScore;
+        if (sodium <= 600) {
+          sodiumScore = 10;
+        } else if (sodium <= 1000) {
+          sodiumScore = (10 - ((sodium - 600) / 400) * 6).clamp(4, 10);
+        } else {
+          sodiumScore = (4 - ((sodium - 1000) / 400) * 8).clamp(0, 4);
+        }
+
+        // ✅ 당류 점수 (농도 기준 비선형 감점)
+        double sugarCutoff = 17 / 667;
+        double sugarScore = (10 -
+                pow(sugarPerG - sugarCutoff, 2).toDouble() * 8000)
+            .clamp(0, 10);
+
+        // ✅ 포화지방산 점수 (절대량 기준 + 비선형 감점)
+        double satFatScore;
+        if (satFat <= 5) {
+          satFatScore = 5;
+        } else {
+          double excess = satFat - 5;
+          satFatScore = (5 - pow(excess, 2).toDouble() * 1.2).clamp(0, 5);
+        }
+
+        // ✅ 탄수화물 점수 (당/탄수화물 비율 기반)
+        double carbScore;
+        if (carbPerG == 0) {
+          carbScore = 5;
+        } else {
+          double sugarRatio = sugarPerG / carbPerG;
+          if (sugarRatio <= 0.15) {
+            carbScore = 10;
+          } else if (sugarRatio <= 0.3) {
+            carbScore = 5;
+          } else {
+            carbScore = 0;
+          }
+        }
+
+        // ✅ 지방 보너스 (농도 기준)
+        double fatBonus;
+        if (fat <= 5) {
+          fatBonus = 10;
+        } else if (fat <= 15) {
+          fatBonus = 5;
+        } else {
+          fatBonus = 0;
+        }
+
+        double totalScore =
+            energyScore +
+            proteinScore +
+            sodiumScore +
+            sugarScore +
+            satFatScore +
+            carbScore +
+            fatBonus;
+
+        snScore += totalScore.clamp(0, 100).round();
+        sn_itemCount++;
       }
     }
-    snackScore.value = snScore;
+    snackScore.value = sn_itemCount == 0 ? 0 : (snScore / sn_itemCount).round();
   }
 
   void _onItemTapped(int idx) => setState(() => _selectedIndex = idx);
@@ -259,6 +705,8 @@ class _ExampleScreenState extends State<ExampleScreen> {
         onFoodChanged: onFoodChanged,
         nickname: nickname ?? '사용자',
         allRecords: _allRecords,
+        allWaterRecords: _allWaterRecords,
+        allSleepRecords: _allSleepRecords,
         //onNicknameChanged: _loadNickname,
       ),
       CalendarTab(
@@ -267,6 +715,8 @@ class _ExampleScreenState extends State<ExampleScreen> {
         scores: _scores,
         onDayChanged: _onDayChanged,
         allRecords: _allRecords,
+        allWaterRecords: _allWaterRecords,
+        allSleepRecords: _allSleepRecords,
       ),
       PeopleTab(onFoodChanged: onFoodChanged),
       //MyTab(nickname: nickname ?? '사용자', onNicknameChanged: _loadNickname),
@@ -333,6 +783,8 @@ class HomeTab extends StatefulWidget {
   final VoidCallback parentSetState;
   final Future<void> Function() onFoodChanged;
   final List<Map<String, dynamic>> allRecords;
+  final List<Map<String, dynamic>> allWaterRecords;
+  final List<Map<String, dynamic>> allSleepRecords;
 
   const HomeTab({
     required this.nickname,
@@ -345,6 +797,8 @@ class HomeTab extends StatefulWidget {
     required this.parentSetState,
     required this.onFoodChanged,
     required this.allRecords,
+    required this.allWaterRecords,
+    required this.allSleepRecords,
   });
 
   @override
@@ -460,15 +914,6 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ],
                   ),
-                  CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.32),
-                    radius: 22,
-                    child: Image.asset(
-                      'assets/icon/heart_front_color.png',
-                      width: 28,
-                      height: 28,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -581,27 +1026,27 @@ class _HomeTabState extends State<HomeTab> {
             SizedBox(height: screenHeight * 0.021),
 
             // 6. 공지 및 기타
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 30),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '공지사항 📢',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF22234C),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 22, vertical: 6),
-              child: Information(),
-            ),
-            SizedBox(height: 10),
+            // Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 30),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //     children: [
+            //       Text(
+            //         '공지사항 📢',
+            //         style: TextStyle(
+            //           fontSize: 18,
+            //           fontWeight: FontWeight.bold,
+            //           color: Color(0xFF22234C),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            // Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 22, vertical: 6),
+            //   child: Information(),
+            // ),
+            //SizedBox(height: 10),
           ],
         ),
       ),
@@ -610,22 +1055,160 @@ class _HomeTabState extends State<HomeTab> {
 
   Widget _buildTotalScoreImageBox() {
     int totalScore = 0;
+    int itemCount = 0;
+
     for (var food in widget.allRecords) {
+      double score;
+
       if (food.containsKey('score')) {
-        totalScore += (food['score'] as num).toInt();
+        score = (food['score'] as num).toDouble();
       } else {
-        double carbohydrate = (food['carbohydrate_g'] ?? 0).toDouble();
+        double kcal = (food['kcal'] ?? 0).toDouble();
+        double protein = (food['protein_g'] ?? 0).toDouble();
         double fat = (food['fat_g'] ?? 0).toDouble();
-        totalScore += (carbohydrate * 2 + fat * 3).toInt();
+        double satFat = (food['saturated_fat_g'] ?? 0).toDouble();
+        double sugar = (food['sugars_g'] ?? 0).toDouble();
+        double sodium = (food['sodium_mg'] ?? 0).toDouble();
+        double weight = (food['total_g'] ?? 0).toDouble();
+        double carb = (food['carbohydrate_g'] ?? 0).toDouble();
+
+        if (weight == 0) continue;
+
+        double sugarPerG = sugar / weight;
+        double fatPerG = fat / weight;
+        double carbPerG = carb / weight;
+
+        // ✅ 에너지 점수 (절대량 기준)
+        double energyScore =
+            kcal <= 700 ? 30 : (30 - ((kcal - 700) / 200) * 10).clamp(10, 30);
+
+        // ✅ 단백질 점수 (절대량 기준)
+        double ratio = protein / 18;
+        double proteinScore =
+            ratio >= 1 ? 25 : (25 * pow(ratio, 0.5).toDouble()).clamp(10, 25);
+
+        // ✅ 나트륨 점수 (절대량 기준)
+        double sodiumScore;
+        if (sodium <= 600) {
+          sodiumScore = 10;
+        } else if (sodium <= 1000) {
+          sodiumScore = (10 - ((sodium - 600) / 400) * 6).clamp(4, 10);
+        } else {
+          sodiumScore = (4 - ((sodium - 1000) / 400) * 8).clamp(0, 4);
+        }
+
+        // ✅ 당류 점수 (농도 기준 비선형 감점)
+        double sugarCutoff = 17 / 667;
+        double sugarScore = (10 -
+                pow(sugarPerG - sugarCutoff, 2).toDouble() * 8000)
+            .clamp(0, 10);
+
+        // ✅ 포화지방산 점수 (절대량 기준 + 비선형 감점)
+        double satFatScore;
+        if (satFat <= 5) {
+          satFatScore = 5;
+        } else {
+          double excess = satFat - 5;
+          satFatScore = (5 - pow(excess, 2).toDouble() * 1.2).clamp(0, 5);
+        }
+
+        // ✅ 탄수화물 점수 (당/탄수화물 비율 기반)
+        double carbScore;
+        if (carbPerG == 0) {
+          carbScore = 5;
+        } else {
+          double sugarRatio = sugarPerG / carbPerG;
+          if (sugarRatio <= 0.15) {
+            carbScore = 10;
+          } else if (sugarRatio <= 0.3) {
+            carbScore = 5;
+          } else {
+            carbScore = 0;
+          }
+        }
+
+        // ✅ 지방 보너스 (농도 기준)
+        double fatBonus;
+        if (fat <= 5) {
+          fatBonus = 10;
+        } else if (fat <= 15) {
+          fatBonus = 5;
+        } else {
+          fatBonus = 0;
+        }
+
+        score = (energyScore +
+                proteinScore +
+                sodiumScore +
+                sugarScore +
+                satFatScore +
+                carbScore +
+                fatBonus)
+            .clamp(0, 100);
       }
+
+      totalScore += score.round();
+      itemCount++;
     }
 
+    double averageScore = itemCount == 0 ? 0 : totalScore / itemCount;
+
+    double calculateSleepScore(double hours) {
+      if (hours >= 7 && hours <= 9) return 100;
+      if (hours < 3) return 30;
+      if (hours > 10) return 40;
+      return (100 - (pow((hours - 8), 2) * 10)).clamp(0, 100).toDouble();
+    }
+
+    double calculateWaterScore(int cups) {
+      if (cups <= 0) return 20;
+      if (cups == 1) return 30;
+      if (cups == 2) return 40;
+      if (cups == 3) return 55;
+      if (cups == 4) return 70;
+      if (cups == 5) return 85;
+      if (cups == 6) return 95;
+      if (cups == 7 || cups == 8) return 100;
+      if (cups == 9) return 95;
+      if (cups == 10) return 90;
+      return 85; // 11잔 이상
+    }
+
+    // ✅ 수면 점수 평균
+    double sleepTotal = 0;
+    for (var r in widget.allSleepRecords) {
+      double h = (r['sleep_hours'] ?? r['hours'] ?? 0).toDouble();
+      sleepTotal += calculateSleepScore(h);
+    }
+    double averageSleepScore =
+        widget.allSleepRecords.isEmpty
+            ? 0
+            : sleepTotal / widget.allSleepRecords.length;
+
+    // ✅ 수분 점수 평균
+    double waterTotal = 0;
+    for (var r in widget.allWaterRecords) {
+      int cups = (r['cups'] ?? 0).toInt();
+      waterTotal += calculateWaterScore(cups);
+    }
+    double averageWaterScore =
+        widget.allWaterRecords.isEmpty
+            ? 0
+            : waterTotal / widget.allWaterRecords.length;
+
+    double totalAverageScore =
+        (averageScore / 100 * 80) + // 음식 점수를 90점 기준으로 환산
+        (averageSleepScore / 100 * 10) + // 수면 점수를 5점 기준으로 환산
+        (averageWaterScore / 100 * 10); // 수분 점수를 5점 기준으로 환산
+
+    int displayedScore = totalAverageScore.round();
+
     String assetPath;
-    if (totalScore >= 100) {
+    if (displayedScore >= 100) {
       assetPath = 'assets/icon/fish.svg';
-    } else if (totalScore >= 60) {
+    } else if (displayedScore >= 60) {
       assetPath = 'assets/icon/carrot.svg';
-    } else if (totalScore >= 30) {
+    } else if (displayedScore >= 30) {
       assetPath = 'assets/icon/apple.svg';
     } else {
       assetPath = 'assets/icon/question01.svg';
@@ -644,7 +1227,7 @@ class _HomeTabState extends State<HomeTab> {
           SvgPicture.asset(assetPath, width: 110, height: 110),
           SizedBox(height: 10),
           Text(
-            '전체 건강 점수: $totalScore',
+            '전체 건강 점수: $displayedScore',
             style: TextStyle(
               color: Color(0xFF695ACD),
               fontWeight: FontWeight.bold,
@@ -655,6 +1238,55 @@ class _HomeTabState extends State<HomeTab> {
       ),
     );
   }
+
+  // 평균 안내는 버전
+  // Widget _buildTotalScoreImageBox() {
+  //   int totalScore = 0;
+  //   for (var food in widget.allRecords) {
+  //     if (food.containsKey('score')) {
+  //       totalScore += (food['score'] as num).toInt();
+  //     } else {
+  //       double carbohydrate = (food['carbohydrate_g'] ?? 0).toDouble();
+  //       double fat = (food['fat_g'] ?? 0).toDouble();
+  //       totalScore += (carbohydrate * 2 + fat * 3).toInt();
+  //     }
+  //   }
+  //
+  //   String assetPath;
+  //   if (totalScore >= 100) {
+  //     assetPath = 'assets/icon/fish.svg';
+  //   } else if (totalScore >= 60) {
+  //     assetPath = 'assets/icon/carrot.svg';
+  //   } else if (totalScore >= 30) {
+  //     assetPath = 'assets/icon/apple.svg';
+  //   } else {
+  //     assetPath = 'assets/icon/question01.svg';
+  //   }
+  //
+  //   return Container(
+  //     width: 320,
+  //     height: 210,
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(16),
+  //     ),
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       children: [
+  //         SvgPicture.asset(assetPath, width: 110, height: 110),
+  //         SizedBox(height: 10),
+  //         Text(
+  //           '전체 건강 점수: $totalScore',
+  //           style: TextStyle(
+  //             color: Color(0xFF695ACD),
+  //             fontWeight: FontWeight.bold,
+  //             fontSize: 20,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildScoreMini(
     String label,
@@ -1032,59 +1664,59 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  // 공지/슬라이드 인포 카드 그대로
-  Widget Information() {
-    return Container(
-      width: 370,
-      height: 85,
-      decoration: ShapeDecoration(
-        color: const Color(0xCCD9D9D9),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 16,
-            child: SvgPicture.asset(
-              'assets/icon/left_arrow.svg',
-              width: 10,
-              height: 17,
-            ),
-          ),
-          Positioned(
-            right: 16,
-            child: SvgPicture.asset(
-              'assets/icon/right_arrow.svg',
-              width: 10,
-              height: 17,
-            ),
-          ),
-          Positioned(
-            bottom: 11,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset('assets/icon/circle.svg', width: 8, height: 8),
-                SizedBox(width: 16),
-                SvgPicture.asset(
-                  'assets/icon/empty_circle.svg',
-                  width: 7,
-                  height: 7,
-                ),
-                SizedBox(width: 16),
-                SvgPicture.asset(
-                  'assets/icon/empty_circle.svg',
-                  width: 7,
-                  height: 7,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // // 공지/슬라이드 인포 카드 그대로
+  // Widget Information() {
+  //   return Container(
+  //     width: 370,
+  //     height: 85,
+  //     decoration: ShapeDecoration(
+  //       color: const Color(0xCCD9D9D9),
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  //     ),
+  //     child: Stack(
+  //       alignment: Alignment.center,
+  //       children: [
+  //         Positioned(
+  //           left: 16,
+  //           child: SvgPicture.asset(
+  //             'assets/icon/left_arrow.svg',
+  //             width: 10,
+  //             height: 17,
+  //           ),
+  //         ),
+  //         Positioned(
+  //           right: 16,
+  //           child: SvgPicture.asset(
+  //             'assets/icon/right_arrow.svg',
+  //             width: 10,
+  //             height: 17,
+  //           ),
+  //         ),
+  //         Positioned(
+  //           bottom: 11,
+  //           child: Row(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               SvgPicture.asset('assets/icon/circle.svg', width: 8, height: 8),
+  //               SizedBox(width: 16),
+  //               SvgPicture.asset(
+  //                 'assets/icon/empty_circle.svg',
+  //                 width: 7,
+  //                 height: 7,
+  //               ),
+  //               SizedBox(width: 16),
+  //               SvgPicture.asset(
+  //                 'assets/icon/empty_circle.svg',
+  //                 width: 7,
+  //                 height: 7,
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }
 
 ///////
@@ -1094,6 +1726,8 @@ class CalendarTab extends StatelessWidget {
   final Map<String, int> scores;
   final Function(DateTime) onDayChanged;
   final List<Map<String, dynamic>> allRecords;
+  final List<Map<String, dynamic>> allWaterRecords;
+  final List<Map<String, dynamic>> allSleepRecords;
 
   // pointGreen도 필드로 추가!
   final Color pointGreen;
@@ -1104,6 +1738,8 @@ class CalendarTab extends StatelessWidget {
     required this.scores,
     required this.onDayChanged,
     required this.allRecords,
+    required this.allWaterRecords,
+    required this.allSleepRecords,
     this.pointGreen = const Color(0xFF8F80F9), // 기본값 가능
     Key? key,
   }) : super(key: key);
@@ -1554,26 +2190,156 @@ class CalendarTab extends StatelessWidget {
   }
 
   Widget _buildTotalScoreCard(BuildContext context) {
-    // 점수 합산 공식 (원하는 대로 바꿔도 됨)
     int totalScore = 0;
-    print('allRecords length: ${allRecords.length}');
-    print('allRecords: $allRecords');
+    int itemCount = 0;
 
     for (var food in allRecords) {
+      double score;
+
       if (food.containsKey('score')) {
-        totalScore += (food['score'] as num).toInt();
+        score = (food['score'] as num).toDouble();
       } else {
-        double carbohydrate = (food['carbohydrate_g'] ?? 0).toDouble();
+        double kcal = (food['kcal'] ?? 0).toDouble();
+        double protein = (food['protein_g'] ?? 0).toDouble();
         double fat = (food['fat_g'] ?? 0).toDouble();
-        totalScore += (carbohydrate * 2 + fat * 3).toInt();
+        double satFat = (food['saturated_fat_g'] ?? 0).toDouble();
+        double sugar = (food['sugars_g'] ?? 0).toDouble();
+        double sodium = (food['sodium_mg'] ?? 0).toDouble();
+        double weight = (food['total_g'] ?? 0).toDouble();
+        double carb = (food['carbohydrate_g'] ?? 0).toDouble();
+
+        if (weight == 0) continue;
+
+        double sugarPerG = sugar / weight;
+        double fatPerG = fat / weight;
+        double carbPerG = carb / weight;
+
+        // ✅ 에너지 점수 (절대량 기준)
+        double energyScore =
+            kcal <= 700 ? 30 : (30 - ((kcal - 700) / 200) * 10).clamp(10, 30);
+
+        // ✅ 단백질 점수 (절대량 기준)
+        double ratio = protein / 18;
+        double proteinScore =
+            ratio >= 1 ? 25 : (25 * pow(ratio, 0.5).toDouble()).clamp(10, 25);
+
+        // ✅ 나트륨 점수 (절대량 기준)
+        double sodiumScore;
+        if (sodium <= 600) {
+          sodiumScore = 10;
+        } else if (sodium <= 1000) {
+          sodiumScore = (10 - ((sodium - 600) / 400) * 6).clamp(4, 10);
+        } else {
+          sodiumScore = (4 - ((sodium - 1000) / 400) * 8).clamp(0, 4);
+        }
+
+        // ✅ 당류 점수 (농도 기준 비선형 감점)
+        double sugarCutoff = 17 / 667;
+        double sugarScore = (10 -
+                pow(sugarPerG - sugarCutoff, 2).toDouble() * 8000)
+            .clamp(0, 10);
+
+        // ✅ 포화지방산 점수 (절대량 기준 + 비선형 감점)
+        double satFatScore;
+        if (satFat <= 5) {
+          satFatScore = 5;
+        } else {
+          double excess = satFat - 5;
+          satFatScore = (5 - pow(excess, 2).toDouble() * 1.2).clamp(0, 5);
+        }
+
+        // ✅ 탄수화물 점수 (당/탄수화물 비율 기반)
+        double carbScore;
+        if (carbPerG == 0) {
+          carbScore = 5;
+        } else {
+          double sugarRatio = sugarPerG / carbPerG;
+          if (sugarRatio <= 0.15) {
+            carbScore = 10;
+          } else if (sugarRatio <= 0.3) {
+            carbScore = 5;
+          } else {
+            carbScore = 0;
+          }
+        }
+
+        // ✅ 지방 보너스 (절대량 기준)
+        double fatBonus;
+        if (fat <= 5) {
+          fatBonus = 10;
+        } else if (fat <= 15) {
+          fatBonus = 5;
+        } else {
+          fatBonus = 0;
+        }
+
+        score = (energyScore +
+                proteinScore +
+                sodiumScore +
+                sugarScore +
+                satFatScore +
+                carbScore +
+                fatBonus)
+            .clamp(0, 100);
       }
+
+      totalScore += score.round();
+      itemCount++;
     }
+
+    double averageScore = itemCount == 0 ? 0 : totalScore / itemCount;
+
+    // ✅ 수면 점수 계산
+    double calculateSleepScore(double hours) {
+      if (hours >= 7 && hours <= 9) return 100;
+      if (hours < 3) return 30;
+      if (hours > 10) return 40;
+      return (100 - (pow((hours - 8), 2) * 10)).clamp(0, 100).toDouble();
+    }
+
+    double sleepTotal = 0;
+    for (var r in allSleepRecords) {
+      double h = (r['sleep_hours'] ?? r['hours'] ?? 0).toDouble();
+      sleepTotal += calculateSleepScore(h);
+    }
+    double averageSleepScore =
+        allSleepRecords.isEmpty ? 0 : sleepTotal / allSleepRecords.length;
+
+    // ✅ 수분 점수 계산
+    double calculateWaterScore(int cups) {
+      if (cups <= 0) return 20;
+      if (cups == 1) return 30;
+      if (cups == 2) return 40;
+      if (cups == 3) return 55;
+      if (cups == 4) return 70;
+      if (cups == 5) return 85;
+      if (cups == 6) return 95;
+      if (cups == 7 || cups == 8) return 100;
+      if (cups == 9) return 95;
+      if (cups == 10) return 90;
+      return 85;
+    }
+
+    double waterTotal = 0;
+    for (var r in allWaterRecords) {
+      int cups = (r['cups'] ?? 0).toInt();
+      waterTotal += calculateWaterScore(cups);
+    }
+    double averageWaterScore =
+        allWaterRecords.isEmpty ? 0 : waterTotal / allWaterRecords.length;
+
+    // ✅ 최종 통합 점수 계산 (가중치 포함)
+    double totalAverageScore =
+        (averageScore / 100 * 80) +
+        (averageSleepScore / 100 * 10) +
+        (averageWaterScore / 100 * 10);
+
+    String scoreText = '${totalAverageScore.round()}점';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Stack(
         children: [
-          // 그라데이션 테두리
           ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: Container(
@@ -1587,7 +2353,6 @@ class CalendarTab extends StatelessWidget {
               ),
             ),
           ),
-          // 흰색 내부 카드
           Container(
             margin: const EdgeInsets.all(4),
             height: 46,
@@ -1617,7 +2382,7 @@ class CalendarTab extends StatelessWidget {
                 ),
                 Spacer(),
                 Text(
-                  '$totalScore점',
+                  scoreText,
                   style: TextStyle(
                     color: pointGreen,
                     fontWeight: FontWeight.bold,
@@ -1632,7 +2397,240 @@ class CalendarTab extends StatelessWidget {
       ),
     );
   }
+  // Widget _buildTotalScoreCard(BuildContext context) {
+  //   // 점수 합산 공식 (원하는 대로 바꿔도 됨)
+  //   int totalScore = 0;
+  //   int itemCount = 0;
+  //   print('allRecords length: ${allRecords.length}');
+  //   print('allRecords: $allRecords');
+  //
+  //   for (var food in allRecords) {
+  //     double score;
+  //
+  //     if (food.containsKey('score')) {
+  //       score = (food['score'] as num).toDouble();
+  //     } else {
+  //       double kcal = (food['kcal'] ?? 0).toDouble();
+  //       double protein = (food['protein_g'] ?? 0).toDouble();
+  //       double fat = (food['fat_g'] ?? 0).toDouble();
+  //       double satFat = (food['saturated_fat_g'] ?? 0).toDouble();
+  //       double sugar = (food['sugars_g'] ?? 0).toDouble();
+  //       double sodium = (food['sodium_mg'] ?? 0).toDouble();
+  //       double weight = (food['total_g'] ?? 0).toDouble();
+  //       double carb = (food['carbohydrate_g'] ?? 0).toDouble();
+  //
+  //       if (weight == 0) continue;
+  //
+  //       double kcalPerG = kcal / weight;
+  //       double proteinPerG = protein / weight;
+  //       double sodiumPerG = sodium / weight;
+  //       double sugarPerG = sugar / weight;
+  //       double satFatPerG = satFat / weight;
+  //       double fatPerG = fat / weight;
+  //       double carbPerG = carb / weight;
+  //
+  //       double kcalCutoff = 1.0;
+  //       double proteinCutoff = 18 / 667;
+  //       double sodiumCutoff = 1.0;
+  //       double sugarCutoff = 17 / 667;
+  //       double satFatCutoff = 5 / 667;
+  //
+  //       double energyScore =
+  //           kcalPerG >= kcalCutoff
+  //               ? max(30 - (kcalPerG - kcalCutoff) * 50, 10)
+  //               : max((kcalPerG / kcalCutoff) * 30, 10);
+  //
+  //       double proteinScore =
+  //           proteinPerG >= proteinCutoff
+  //               ? 25
+  //               : max((proteinPerG / proteinCutoff) * 25, 0);
+  //
+  //       double sodiumScore =
+  //           sodiumPerG <= sodiumCutoff
+  //               ? 10
+  //               : max(
+  //                 10 - pow(sodiumPerG - sodiumCutoff, 2).toDouble() * 100,
+  //                 0,
+  //               );
+  //
+  //       double sugarScore =
+  //           sugarPerG <= sugarCutoff
+  //               ? 10
+  //               : max(
+  //                 10 - pow(sugarPerG - sugarCutoff, 2).toDouble() * 8000,
+  //                 0,
+  //               );
+  //
+  //       double satFatScore =
+  //           satFatPerG <= satFatCutoff
+  //               ? 5
+  //               : max(
+  //                 5 - pow(satFatPerG - satFatCutoff, 2).toDouble() * 5000,
+  //                 0,
+  //               );
+  //
+  //       double carbScore;
+  //       if (carbPerG == 0) {
+  //         carbScore = 5;
+  //       } else {
+  //         double sugarRatio = sugarPerG / carbPerG;
+  //         carbScore = sugarRatio <= 0.15 ? 10 : (sugarRatio <= 0.3 ? 5 : 0);
+  //       }
+  //
+  //       double fatBonus = fatPerG < 0.015 ? 10 : (fatPerG <= 0.045 ? 5 : 0);
+  //
+  //       score = (energyScore +
+  //               proteinScore +
+  //               sodiumScore +
+  //               sugarScore +
+  //               satFatScore +
+  //               carbScore +
+  //               fatBonus)
+  //           .clamp(0, 100);
+  //     }
+  //
+  //     totalScore += score.round();
+  //     itemCount++;
+  //   }
+  //
+  //   double averageScore = itemCount == 0 ? 0 : totalScore / itemCount;
+  //   String scoreText = '${averageScore.round()}점'; // UI에 표시할 평균 점수
+  //
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+  //     child: Stack(
+  //       children: [
+  //         ClipRRect(
+  //           borderRadius: BorderRadius.circular(18),
+  //           child: Container(
+  //             height: 54,
+  //             decoration: BoxDecoration(
+  //               gradient: LinearGradient(
+  //                 colors: [Color(0xFF8F80F9), Color(0xFF5ED593)],
+  //                 begin: Alignment.topLeft,
+  //                 end: Alignment.bottomRight,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         Container(
+  //           margin: const EdgeInsets.all(4),
+  //           height: 46,
+  //           decoration: BoxDecoration(
+  //             color: Colors.white,
+  //             borderRadius: BorderRadius.circular(14),
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: Color(0x118F80F9),
+  //                 blurRadius: 7,
+  //                 offset: Offset(0, 4),
+  //               ),
+  //             ],
+  //           ),
+  //           child: Row(
+  //             children: [
+  //               SizedBox(width: 14),
+  //               Icon(Icons.star, color: pointGreen, size: 22),
+  //               SizedBox(width: 13),
+  //               Text(
+  //                 '전체 건강 점수',
+  //                 style: TextStyle(
+  //                   fontWeight: FontWeight.bold,
+  //                   color: pointGreen,
+  //                   fontSize: 16,
+  //                 ),
+  //               ),
+  //               Spacer(),
+  //               Text(
+  //                 scoreText, // ✅ 평균 점수 텍스트로 변경
+  //                 style: TextStyle(
+  //                   color: pointGreen,
+  //                   fontWeight: FontWeight.bold,
+  //                   fontSize: 17,
+  //                 ),
+  //               ),
+  //               SizedBox(width: 14),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+
+  // for (var food in allRecords) {
+  //   if (food.containsKey('score')) {
+  //     totalScore += (food['score'] as num).toInt();
+  //   } else {
+  //     double carbohydrate = (food['carbohydrate_g'] ?? 0).toDouble();
+  //     double fat = (food['fat_g'] ?? 0).toDouble();
+  //     totalScore += (carbohydrate * 2 + fat * 3).toInt();
+  //   }
+  // }
+  //
+  // return Padding(
+  //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+  //   child: Stack(
+  //     children: [
+  //       // 그라데이션 테두리
+  //       ClipRRect(
+  //         borderRadius: BorderRadius.circular(18),
+  //         child: Container(
+  //           height: 54,
+  //           decoration: BoxDecoration(
+  //             gradient: LinearGradient(
+  //               colors: [Color(0xFF8F80F9), Color(0xFF5ED593)],
+  //               begin: Alignment.topLeft,
+  //               end: Alignment.bottomRight,
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //       // 흰색 내부 카드
+  //       Container(
+  //         margin: const EdgeInsets.all(4),
+  //         height: 46,
+  //         decoration: BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.circular(14),
+  //           boxShadow: [
+  //             BoxShadow(
+  //               color: Color(0x118F80F9),
+  //               blurRadius: 7,
+  //               offset: Offset(0, 4),
+  //             ),
+  //           ],
+  //         ),
+  //         child: Row(
+  //           children: [
+  //             SizedBox(width: 14),
+  //             Icon(Icons.star, color: pointGreen, size: 22),
+  //             SizedBox(width: 13),
+  //             Text(
+  //               '전체 건강 점수',
+  //               style: TextStyle(
+  //                 fontWeight: FontWeight.bold,
+  //                 color: pointGreen,
+  //                 fontSize: 16,
+  //               ),
+  //             ),
+  //             Spacer(),
+  //             Text(
+  //               '$totalScore점',
+  //               style: TextStyle(
+  //                 color: pointGreen,
+  //                 fontWeight: FontWeight.bold,
+  //                 fontSize: 17,
+  //               ),
+  //             ),
+  //             SizedBox(width: 14),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   ),
+  // );
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // // ========== 아래는 나머지 탭 예시 ============
@@ -1889,7 +2887,7 @@ class _PeopleTabState extends State<PeopleTab> {
                   child:
                       selectedTab == 0
                           ? FutureBuilder<List<String>>(
-                            future: getKeywords(), // ← 여기를 실시간 함수로!
+                            future: getKeywords(),
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) {
                                 return Center(
@@ -1910,17 +2908,99 @@ class _PeopleTabState extends State<PeopleTab> {
                               );
                             },
                           )
-                          : Center(
-                            child: Text(
-                              "최근 본 레시피가 여기에 표시됩니다.",
-                              style: TextStyle(
-                                color: Color(0xFF555555),
-                                fontSize: 14,
-                              ),
-                            ),
+                          : FutureBuilder<List<Map<String, dynamic>>>(
+                            future: getRecentRecipes(), // 📌 너가 만든 최근 본 레시피 함수
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              final recipes = snapshot.data!;
+                              if (recipes.isEmpty) {
+                                return Center(
+                                  child: Text(
+                                    "최근 본 레시피가 없습니다.",
+                                    style: TextStyle(
+                                      color: Color(0xFF555555),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return ListView.separated(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemCount: recipes.length,
+                                separatorBuilder:
+                                    (_, __) => SizedBox(height: 10),
+                                itemBuilder: (context, index) {
+                                  final recipe = recipes[index];
+                                  return buildRecipeCard(
+                                    recipe,
+                                    onTap: () async {
+                                      await addRecentRecipe(
+                                        recipe['_id'],
+                                      ); // 최근 본 레시피 등록
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => RecipeDetailPage(
+                                                recipe: recipe,
+                                              ), // ✅ 여기가 핵심!
+                                        ),
+                                      );
+                                    },
+                                    onDelete: () async {
+                                      await deleteRecentRecipe(
+                                        recipe['_id'],
+                                      ); // ✅ 삭제 함수 호출
+                                      setState(() {}); // ✅ 삭제 후 UI 갱신
+                                    },
+                                  );
+                                },
+                              );
+                            },
                           ),
                 ),
 
+                // Padding(
+                //   padding: EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+                //   child:
+                //       selectedTab == 0
+                //           ? FutureBuilder<List<String>>(
+                //             future: getKeywords(), // ← 여기를 실시간 함수로!
+                //             builder: (context, snapshot) {
+                //               if (!snapshot.hasData) {
+                //                 return Center(
+                //                   child: CircularProgressIndicator(),
+                //                 );
+                //               }
+                //               final keywords = snapshot.data!;
+                //               return Wrap(
+                //                 spacing: 12,
+                //                 runSpacing: 10,
+                //                 children:
+                //                     keywords
+                //                         .map(
+                //                           (keyword) =>
+                //                               gradientBorderTag(keyword),
+                //                         )
+                //                         .toList(),
+                //               );
+                //             },
+                //           )
+                //           : Center(
+                //             child: Text(
+                //               "최근 본 레시피가 여기에 표시됩니다.",
+                //               style: TextStyle(
+                //                 color: Color(0xFF555555),
+                //                 fontSize: 14,
+                //               ),
+                //             ),
+                //           ),
+                // ),
                 SizedBox(height: 30), // 하단 여백
               ],
             ),
@@ -1928,6 +3008,180 @@ class _PeopleTabState extends State<PeopleTab> {
           // 상태바 배경 하얗게 안 나오게 해주는 SafeArea (필요하면 주석)
           // SafeArea(top: false, child: Container()),
         ],
+      ),
+    );
+  }
+
+  Widget buildRecipeCard(
+    Map<String, dynamic> recipe, {
+    VoidCallback? onTap,
+    VoidCallback? onDelete,
+  }) {
+    final bgPurple = Color(0xFF8F80F9);
+    final bgMint = Color(0xFF5ED593);
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 8),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // 🟩 카드 본체
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    bgPurple.withOpacity(0.11),
+                    bgMint.withOpacity(0.11),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 이미지
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        recipe['imageUrl'] ?? '',
+                        width: 85,
+                        height: 85,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (context, error, stackTrace) => Container(
+                              width: 85,
+                              height: 85,
+                              color: Colors.grey[300],
+                            ),
+                      ),
+                    ),
+                    SizedBox(width: 14),
+                    // 텍스트 정보
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            recipe['name'] ?? '이름 없음',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Colors.black,
+                              fontFamily: 'Pretendard',
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          if (recipe['keywords'] != null)
+                            Text(
+                              (recipe['keywords'] as List)
+                                  .map((e) => '#$e')
+                                  .join('  '),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Pretendard',
+                              ),
+                            ),
+                          if (recipe['desc'] != null) ...[
+                            SizedBox(height: 4),
+                            Text(
+                              recipe['desc'],
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.black.withOpacity(0.7),
+                                fontFamily: 'Pretendard',
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.timer,
+                                size: 14,
+                                color: Colors.black54,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                '${recipe['time'] ?? '?'}분',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                '🔥 난이도 ${recipe['level'] ?? '?'}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                '👤 ${recipe['serving'] ?? '?'}인분',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // 🗑 삭제 아이콘
+            if (onDelete != null)
+              Positioned(
+                top: 4,
+                right: 6,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: onDelete,
+                    child: Container(
+                      padding: EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black26, blurRadius: 4),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.delete_rounded,
+                        color: Colors.redAccent,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

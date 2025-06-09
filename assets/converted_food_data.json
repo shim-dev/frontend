@@ -1520,24 +1520,24 @@
   {
     "name":"츄러스",
     "total_g":140.0,
-    "kcal":259.0,
+    "kcal":419.0,
     "protein_g":5.88,
-    "fat_g":6.006,
+    "fat_g":22.006,
     "carbohydrate_g":43.036,
-    "sugars_g":4.214,
+    "sugars_g":23.4,
     "saturated_fat_g":1.092,
     "sodium_mg":424.2
   },
   {
-    "name":"피자",
+    "name":"피자_1조각",
     "total_g":210.0,
-    "kcal":321.3,
+    "kcal":445.3,
     "protein_g":16.38,
     "fat_g":10.017,
     "carbohydrate_g":44.247,
     "sugars_g":6.51,
     "saturated_fat_g":4.851,
-    "sodium_mg":375.9
+    "sodium_mg":608.9
   },
   {
     "name":"햄버거_돼지고기",
