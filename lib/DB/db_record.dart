@@ -165,3 +165,41 @@ Future<List<Map<String, dynamic>>> getAllRecords() async {
     throw Exception('Failed to get all records');
   }
 }
+
+// 전체 수분 섭취량
+Future<List<Map<String, dynamic>>> getAllWaterRecords() async {
+  final userId = await getUserId();
+  final response = await http.get(
+    Uri.parse('$apiBase/get_all_water_records?user_id=$userId'),
+  );
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map<Map<String, dynamic>>((e) {
+      if (e['_id'] is Map && e['_id']['\$oid'] != null) {
+        e['_id'] = e['_id']['\$oid'];
+      }
+      return Map<String, dynamic>.from(e);
+    }).toList();
+  } else {
+    throw Exception('❌ Failed to get all water records');
+  }
+}
+
+// 전체 수면량
+Future<List<Map<String, dynamic>>> getAllSleepRecords() async {
+  final userId = await getUserId();
+  final response = await http.get(
+    Uri.parse('$apiBase/get_all_sleep_records?user_id=$userId'),
+  );
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map<Map<String, dynamic>>((e) {
+      if (e['_id'] is Map && e['_id']['\$oid'] != null) {
+        e['_id'] = e['_id']['\$oid'];
+      }
+      return Map<String, dynamic>.from(e);
+    }).toList();
+  } else {
+    throw Exception('❌ Failed to get all sleep records');
+  }
+}

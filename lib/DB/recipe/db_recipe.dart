@@ -41,3 +41,16 @@ Future<List<String>> getKeywords() async {
     throw Exception('Failed to get keywords');
   }
 }
+
+// 레시피 북마크 추가
+Future<void> bookmarkRecipe(String recipeId) async {
+  final userId = await getUserId();
+  final response = await http.post(
+    Uri.parse('$apiBase/bookmark_recipe'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'user_id': userId, 'recipe_id': recipeId}),
+  );
+  if (response.statusCode != 200) {
+    throw Exception('북마크 저장 실패: ${response.body}');
+  }
+}

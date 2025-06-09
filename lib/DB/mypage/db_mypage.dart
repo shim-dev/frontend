@@ -17,7 +17,7 @@ Future<Map<String, dynamic>?> fetchUserInfo() async {
       return {
         'nickname': data['nickname'],
         'email': data['email'],
-        'profileImageUrl': data['profile_url'], 
+        'profileImageUrl': data['profile_url'],
       };
     } else {
       print("❌ 사용자 정보 불러오기 실패: ${response.statusCode}");
@@ -84,7 +84,9 @@ Future<bool> changePassword(String currentPassword, String newPassword) async {
 }
 
 Future<Map<String, dynamic>?> getHeightWeight(String userId) async {
-  final url = Uri.parse('http://127.0.0.1:5000/api/mypage/health_profile?user_id=$userId');
+  final url = Uri.parse(
+    'http://127.0.0.1:5000/api/mypage/health_profile?user_id=$userId',
+  );
 
   try {
     final response = await http.get(url);

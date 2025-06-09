@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 
 Future<Map<String, dynamic>> signupUser(String email, String password) async {
   final response = await http.post(
-
     Uri.parse('http://127.0.0.1:5000/signup'),
 
     headers: {'Content-Type': 'application/json'},

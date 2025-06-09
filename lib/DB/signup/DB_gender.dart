@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 
 Future<Map<String, dynamic>> setGender(String userId, String gender) async {
   final response = await http.post(
-
     Uri.parse('http://127.0.0.1:5000/set_gender'),
 
     headers: {'Content-Type': 'application/json'},

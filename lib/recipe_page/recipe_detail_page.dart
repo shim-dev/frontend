@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shim/DB/db_bookmark.dart';
+import 'package:shim/DB/recipe/db_recipe.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class RecipeDetailPage extends StatefulWidget {
@@ -431,6 +431,88 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                     ),
                   ),
                 ),
+
+              if (recipe['book'] != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 20,
+                  ),
+                  child: GestureDetector(
+                    onTap: () => launchUrl(Uri.parse(recipe['book'])),
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        gradient: LinearGradient(
+                          colors: [
+                            bgPurple.withOpacity(0.35), // 💡 연한 보라
+                            bgMint.withOpacity(0.35), // 💡 연한 민트
+                          ], // 💡 그라데이션 배경 적용
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              recipe['imageUrl'] ?? '',
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) => Container(
+                                    width: 48,
+                                    height: 48,
+                                    color: Colors.grey[300],
+                                    child: Icon(Icons.image, size: 24),
+                                  ),
+                            ),
+                          ),
+                          SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  recipe['name'] ?? '',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'book',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.open_in_new,
+                            size: 20,
+                            color: Colors.black,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
               SizedBox(height: 30),
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20, bottom: 40),

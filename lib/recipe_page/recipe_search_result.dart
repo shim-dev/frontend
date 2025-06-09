@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shim/DB/db_recipe.dart';
 import 'package:shim/DB/db_record.dart';
+import 'package:shim/DB/recipe/db_recent_seen_recipe.dart';
+import 'package:shim/DB/recipe/db_recipe.dart';
 import 'package:shim/recipe_page/recipe_detail_page.dart';
 
 class RecipeSearchResultPage extends StatefulWidget {
@@ -234,6 +235,7 @@ class _RecipeSearchResultPageState extends State<RecipeSearchResultPage> {
                               onTap: () async {
                                 final recipe = searchResults[idx];
                                 await increaseRecipeView(recipe['_id']);
+                                await addRecentRecipe(recipe['_id']);
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
