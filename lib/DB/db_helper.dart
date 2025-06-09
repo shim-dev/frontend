@@ -1,6 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String apiBase = 'http://127.0.0.1/5000';
+const String apiBase = 'http://127.0.0.1:5000';
 //const String apiBase = 'http://125.128.179.84:5000'; <- 충돌 원인 수정
 
 final FlutterSecureStorage _storage = FlutterSecureStorage();
