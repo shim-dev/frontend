@@ -75,7 +75,11 @@ class _WaterIntakeDialogState extends State<WaterIntakeDialog> {
                 return GestureDetector(
                   onTap: () {
                     setState(() {
-                      selectedCups = index + 1;
+                      if (selectedCups == 1 && index == 0) {
+                        selectedCups = 0; // 다시 눌렀을 때 0잔
+                      } else {
+                        selectedCups = index + 1;
+                      }
                     });
                   },
                   child: ShaderMask(

@@ -1026,27 +1026,27 @@ class _HomeTabState extends State<HomeTab> {
             SizedBox(height: screenHeight * 0.021),
 
             // 6. 공지 및 기타
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 30),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '공지사항 📢',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF22234C),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 22, vertical: 6),
-              child: Information(),
-            ),
-            SizedBox(height: 10),
+            // Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 30),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //     children: [
+            //       Text(
+            //         '공지사항 📢',
+            //         style: TextStyle(
+            //           fontSize: 18,
+            //           fontWeight: FontWeight.bold,
+            //           color: Color(0xFF22234C),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            // Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 22, vertical: 6),
+            //   child: Information(),
+            // ),
+            //SizedBox(height: 10),
           ],
         ),
       ),
@@ -1664,59 +1664,59 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  // 공지/슬라이드 인포 카드 그대로
-  Widget Information() {
-    return Container(
-      width: 370,
-      height: 85,
-      decoration: ShapeDecoration(
-        color: const Color(0xCCD9D9D9),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 16,
-            child: SvgPicture.asset(
-              'assets/icon/left_arrow.svg',
-              width: 10,
-              height: 17,
-            ),
-          ),
-          Positioned(
-            right: 16,
-            child: SvgPicture.asset(
-              'assets/icon/right_arrow.svg',
-              width: 10,
-              height: 17,
-            ),
-          ),
-          Positioned(
-            bottom: 11,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset('assets/icon/circle.svg', width: 8, height: 8),
-                SizedBox(width: 16),
-                SvgPicture.asset(
-                  'assets/icon/empty_circle.svg',
-                  width: 7,
-                  height: 7,
-                ),
-                SizedBox(width: 16),
-                SvgPicture.asset(
-                  'assets/icon/empty_circle.svg',
-                  width: 7,
-                  height: 7,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // // 공지/슬라이드 인포 카드 그대로
+  // Widget Information() {
+  //   return Container(
+  //     width: 370,
+  //     height: 85,
+  //     decoration: ShapeDecoration(
+  //       color: const Color(0xCCD9D9D9),
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+  //     ),
+  //     child: Stack(
+  //       alignment: Alignment.center,
+  //       children: [
+  //         Positioned(
+  //           left: 16,
+  //           child: SvgPicture.asset(
+  //             'assets/icon/left_arrow.svg',
+  //             width: 10,
+  //             height: 17,
+  //           ),
+  //         ),
+  //         Positioned(
+  //           right: 16,
+  //           child: SvgPicture.asset(
+  //             'assets/icon/right_arrow.svg',
+  //             width: 10,
+  //             height: 17,
+  //           ),
+  //         ),
+  //         Positioned(
+  //           bottom: 11,
+  //           child: Row(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               SvgPicture.asset('assets/icon/circle.svg', width: 8, height: 8),
+  //               SizedBox(width: 16),
+  //               SvgPicture.asset(
+  //                 'assets/icon/empty_circle.svg',
+  //                 width: 7,
+  //                 height: 7,
+  //               ),
+  //               SizedBox(width: 16),
+  //               SvgPicture.asset(
+  //                 'assets/icon/empty_circle.svg',
+  //                 width: 7,
+  //                 height: 7,
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }
 
 ///////
