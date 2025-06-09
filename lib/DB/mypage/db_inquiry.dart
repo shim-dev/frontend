@@ -1,12 +1,13 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shim/DB/db_helper.dart'; 
 
-const String apiBase = 'http://127.0.0.1:5000/api/mypage';
+import 'package:http/http.dart' as http;
+import 'package:shim/DB/db_helper.dart';
+
+const String apiBase = 'http://210.125.91.93:5000/api/mypage';
 
 // 🔹 1:1 문의 내역 불러오기
 Future<List<dynamic>?> fetchInquiriesFromDB() async {
-  final userId = await getUserId(); 
+  final userId = await getUserId();
   if (userId == null) {
     print('❌ 사용자 ID 없음');
     return null;

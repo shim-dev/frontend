@@ -1,6 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String apiBase = 'http://127.0.0.1/5000';
+const String apiBase = 'http://210.125.91.93:5000';
 final FlutterSecureStorage _storage = FlutterSecureStorage();
 
 String todayStr() {

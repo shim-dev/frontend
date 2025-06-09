@@ -47,7 +47,7 @@ class _SearchScreenState extends State<SearchScreenLn> {
     });
     try {
       final response = await dio.post(
-        'http://59.5.184.5:5000/detect',
+        'http://210.125.91.93:5000/detect',
         data: formData,
       );
       print('🔗 서버 응답: ${response.statusCode}');
