@@ -519,7 +519,12 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildCircleInfo("점수", recipe['score'].toString()),
+                    _buildCircleInfo(
+                      "점수",
+                      double.parse(
+                        recipe['score'].toString(),
+                      ).toStringAsFixed(0),
+                    ),
                     _buildCircleInfo("조회수", recipe['views'].toString()),
                     _buildCircleInfo("조리 시간", "${recipe['time']}분"),
                   ],
