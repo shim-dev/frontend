@@ -280,31 +280,37 @@ class _SnackLogState extends State<SnackLog> {
                           ],
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  food['name'],
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    fontFamily: 'Pretendard',
+                            /// ✅ 텍스트가 줄바꿈 가능하게 확장됨
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    food['name'],
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                      fontFamily: 'Pretendard',
+                                      decoration: TextDecoration.none,
+                                    ),
+                                    overflow: TextOverflow.visible,
+                                    softWrap: true,
                                   ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  '${food['kcal']} Kcal',
-                                  style: TextStyle(
-                                    fontSize: 13.5,
-                                    color: Colors.black54,
-                                    fontWeight: FontWeight.w500,
+                                  SizedBox(height: 4),
+                                  Text(
+                                    '${food['kcal']} Kcal',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.w500,
+                                      decoration: TextDecoration.none,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                             Row(
                               children: [
