@@ -276,6 +276,8 @@ class _ExampleScreenState extends State<ExampleScreen> {
     await fetchCalendarFoods(_selectedDay);
     await fetchAllRecords(); // 캘린더 갱신
     await calculateScoresFromDB();
+    await fetchAllSleepRecords();
+    await fetchAllWaterRecords();
     setState(() {});
   }
 
