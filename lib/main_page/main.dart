@@ -1204,14 +1204,18 @@ class _HomeTabState extends State<HomeTab> {
     int displayedScore = totalAverageScore.round();
 
     String assetPath;
-    if (displayedScore >= 100) {
-      assetPath = 'assets/icon/fish.svg';
-    } else if (displayedScore >= 60) {
-      assetPath = 'assets/icon/carrot.svg';
-    } else if (displayedScore >= 30) {
-      assetPath = 'assets/icon/apple.svg';
+    if (displayedScore < 50) {
+      assetPath = 'assets/icon/bad_score.png';
+    } else if (displayedScore < 60) {
+      assetPath = 'assets/icon/notgood_score.png';
+    } else if (displayedScore < 70) {
+      assetPath = 'assets/icon/middle_score.png';
+    } else if (displayedScore < 80) {
+      assetPath = 'assets/icon/good_score.png';
+    } else if (displayedScore < 100) {
+      assetPath = 'assets/icon/active_turtle.png';
     } else {
-      assetPath = 'assets/icon/question01.svg';
+      assetPath = 'assets/icon/active_turtle.png';
     }
 
     return Container(
@@ -1224,7 +1228,7 @@ class _HomeTabState extends State<HomeTab> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset(assetPath, width: 110, height: 110),
+          Image.asset(assetPath, width: 110, height: 110),
           SizedBox(height: 10),
           Text(
             '전체 건강 점수: $displayedScore',
