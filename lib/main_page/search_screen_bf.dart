@@ -71,7 +71,7 @@ class _SearchScreenState extends State<SearchScreenBf> {
     });
     try {
       final response = await dio.post(
-        'http://http://210.125.91.93:5000/detect',
+        'http://210.125.91.93:5000/detect',
         data: formData,
       );
       print('🔗 서버 응답: ${response.statusCode}');
